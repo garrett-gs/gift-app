@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Gift, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserMenu } from "@/components/layout/user-menu";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +16,7 @@ const navItems = [
   { href: "/notifications", label: "Notifications" },
 ];
 
-export function TopNav({ displayName }: { displayName: string }) {
+export function TopNav({ displayName, unreadNotifications }: { displayName: string; unreadNotifications: number }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -41,7 +42,10 @@ export function TopNav({ displayName }: { displayName: string }) {
         {/* Spacer for desktop (sidebar has the logo) */}
         <div className="hidden md:block" />
 
-        <UserMenu displayName={displayName} />
+        <div className="flex items-center gap-2">
+          <NotificationBell unreadCount={unreadNotifications} />
+          <UserMenu displayName={displayName} />
+        </div>
       </div>
 
       {/* Mobile nav */}
