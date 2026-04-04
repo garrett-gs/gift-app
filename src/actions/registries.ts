@@ -40,7 +40,7 @@ export async function createRegistry(formData: FormData): Promise<ActionResult<s
 
   const slug = generateSlug(parsed.data.title);
 
-  const { error } = await supabase.from("registries").insert({
+  const { data, error } = await supabase.from("registries").insert({
     owner_id: user.id,
     title: parsed.data.title,
     description: parsed.data.description || null,
@@ -48,10 +48,14 @@ export async function createRegistry(formData: FormData): Promise<ActionResult<s
     occasion_date: parsed.data.occasionDate || null,
     is_public: parsed.data.isPublic || false,
     slug,
-  });
+  }).select().single();
 
   if (error) {
     return { success: false, error: error.message };
+  }
+
+  if (!data) {
+    return { success: false, error: "Failed to create registry. Please try again." };
   }
 
   revalidatePath("/registries");
