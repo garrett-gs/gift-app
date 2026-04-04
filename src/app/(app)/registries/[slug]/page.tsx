@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Plus, Calendar, Gift } from "lucide-react";
+import { Pencil, Calendar, Gift } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { AddItemDialog } from "@/components/items/add-item-dialog";
+import { ItemGrid } from "@/components/items/item-grid";
 import { OCCASION_TYPES } from "@/lib/constants";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -89,6 +91,7 @@ export default async function RegistryDetailPage({ params }: Props) {
 
         {isOwner && (
           <div className="flex items-center gap-2">
+            <AddItemDialog registryId={registry.id} />
             <Link
               href={`/registries/${slug}/edit`}
               className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
@@ -103,26 +106,11 @@ export default async function RegistryDetailPage({ params }: Props) {
       {/* Items */}
       <div className="mt-8">
         {items && items.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-lg border p-4"
-              >
-                <h3 className="font-semibold">{item.name}</h3>
-                {item.description && (
-                  <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                    {item.description}
-                  </p>
-                )}
-                {item.price && (
-                  <p className="mt-2 text-sm font-medium">
-                    ${Number(item.price).toFixed(2)}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
+          <ItemGrid
+            items={items}
+            registrySlug={slug}
+            isOwner={isOwner}
+          />
         ) : (
           <EmptyState
             icon={<Gift className="h-12 w-12" />}
@@ -133,12 +121,7 @@ export default async function RegistryDetailPage({ params }: Props) {
                 : "This registry doesn't have any items yet."
             }
             action={
-              isOwner ? (
-                <span className={cn(buttonVariants(), "gap-2 opacity-50 cursor-not-allowed")}>
-                  <Plus className="h-4 w-4" />
-                  Add Item (coming next)
-                </span>
-              ) : undefined
+              isOwner ? <AddItemDialog registryId={registry.id} /> : undefined
             }
           />
         )}
