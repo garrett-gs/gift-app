@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { signIn } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import Link from "next/link";
 export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
     setPending(true);
@@ -24,8 +26,10 @@ export function LoginForm() {
     const result = await signIn(formData);
     setPending(false);
 
-    // If we get here, signIn didn't redirect (meaning it failed)
-    if (result && !result.success) {
+    if (result.success) {
+      router.push("/dashboard");
+      router.refresh();
+    } else {
       setError(result.error);
     }
   }

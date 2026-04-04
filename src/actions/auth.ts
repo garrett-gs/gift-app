@@ -56,7 +56,7 @@ export async function signIn(formData: FormData): Promise<ActionResult> {
     return { success: false, error: error.message };
   }
 
-  redirect("/dashboard");
+  return { success: true, data: undefined };
 }
 
 export async function resetPassword(formData: FormData): Promise<ActionResult> {
