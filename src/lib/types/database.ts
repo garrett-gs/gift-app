@@ -36,6 +36,7 @@ export interface Database {
           avatar_url?: string | null;
           updated_at?: string;
         };
+        Relationships: [];
       };
       registries: {
         Row: {
@@ -74,6 +75,7 @@ export interface Database {
           slug?: string;
           updated_at?: string;
         };
+        Relationships: [];
       };
       registry_items: {
         Row: {
@@ -127,6 +129,7 @@ export interface Database {
           sort_order?: number;
           updated_at?: string;
         };
+        Relationships: [];
       };
       purchases: {
         Row: {
@@ -154,6 +157,7 @@ export interface Database {
           is_purchased?: boolean;
           notes?: string | null;
         };
+        Relationships: [];
       };
       subscriptions: {
         Row: {
@@ -173,6 +177,7 @@ export interface Database {
         Update: {
           role?: string;
         };
+        Relationships: [];
       };
       invitations: {
         Row: {
@@ -201,6 +206,7 @@ export interface Database {
           accepted_at?: string | null;
           role?: string;
         };
+        Relationships: [];
       };
       notifications: {
         Row: {
@@ -226,10 +232,17 @@ export interface Database {
         Update: {
           is_read?: boolean;
         };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      accept_invitation: {
+        Args: { p_token: string };
+        Returns: Json;
+      };
+    };
     Enums: Record<string, never>;
+    CompositeTypes: Record<string, never>;
   };
 }
