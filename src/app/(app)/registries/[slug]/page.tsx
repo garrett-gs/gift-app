@@ -10,6 +10,7 @@ import { OCCASION_TYPES } from "@/lib/constants";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
+import type { Purchase, Profile } from "@/lib/types";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -46,12 +47,51 @@ export default async function RegistryDetailPage({ params }: Props) {
 
   const isOwner = registry.owner_id === user?.id;
 
+  // Check if current user is a subscriber
+  let isSubscriber = false;
+  if (user && !isOwner) {
+    const { data: sub } = await supabase
+      .from("subscriptions")
+      .select("id")
+      .eq("registry_id", registry.id)
+      .eq("subscriber_id", user.id)
+      .single();
+    isSubscriber = !!sub;
+  }
+
   const { data: items } = await supabase
     .from("registry_items")
     .select("*")
     .eq("registry_id", registry.id)
     .eq("is_archived", false)
     .order("sort_order", { ascending: true });
+
+  // LAYER 2 OF SURPRISE PRESERVATION:
+  // Only fetch purchases if the viewer is NOT the owner.
+  // The database RLS (Layer 1) would block it anyway, but we don't even query.
+  let purchases: Purchase[] = [];
+  let purchaserProfiles: Profile[] = [];
+
+  if (!isOwner && isSubscriber && items && items.length > 0) {
+    const itemIds = items.map((i) => i.id);
+
+    const { data: purchaseData } = await supabase
+      .from("purchases")
+      .select("*")
+      .in("item_id", itemIds);
+
+    purchases = purchaseData || [];
+
+    // Get purchaser profiles for display
+    if (purchases.length > 0) {
+      const purchaserIds = [...new Set(purchases.map((p) => p.purchaser_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("*")
+        .in("id", purchaserIds);
+      purchaserProfiles = profiles || [];
+    }
+  }
 
   const occasionLabel = OCCASION_TYPES.find(
     (o) => o.value === registry.occasion
@@ -117,6 +157,10 @@ export default async function RegistryDetailPage({ params }: Props) {
             items={items}
             registrySlug={slug}
             isOwner={isOwner}
+            isSubscriber={isSubscriber}
+            currentUserId={user?.id}
+            purchases={purchases}
+            purchaserProfiles={purchaserProfiles}
           />
         ) : (
           <EmptyState

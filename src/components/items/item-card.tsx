@@ -4,7 +4,9 @@ import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/constants";
-import type { RegistryItem } from "@/lib/types";
+import { PurchaseButton } from "@/components/items/purchase-button";
+import { PurchaseBadge } from "@/components/items/purchase-badge";
+import type { RegistryItem, Purchase, Profile } from "@/lib/types";
 import { useState } from "react";
 import { deleteItem } from "@/actions/items";
 
@@ -12,10 +14,23 @@ interface ItemCardProps {
   item: RegistryItem;
   registrySlug: string;
   isOwner: boolean;
+  isSubscriber: boolean;
+  currentUserId?: string;
+  purchases?: Purchase[];
+  purchaserProfiles?: Profile[];
   onEdit?: (item: RegistryItem) => void;
 }
 
-export function ItemCard({ item, registrySlug, isOwner, onEdit }: ItemCardProps) {
+export function ItemCard({
+  item,
+  registrySlug,
+  isOwner,
+  isSubscriber,
+  currentUserId,
+  purchases = [],
+  purchaserProfiles = [],
+  onEdit,
+}: ItemCardProps) {
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -25,10 +40,12 @@ export function ItemCard({ item, registrySlug, isOwner, onEdit }: ItemCardProps)
     setDeleting(false);
   }
 
-  const fullyPurchased = item.quantity_purchased >= item.quantity_desired;
+  const itemPurchases = purchases.filter((p) => p.item_id === item.id);
+  const totalPurchased = itemPurchases.reduce((sum, p) => sum + p.quantity, 0);
+  const fullyPurchased = totalPurchased >= item.quantity_desired;
 
   return (
-    <div className={`rounded-lg border p-4 transition-colors ${fullyPurchased ? "opacity-60" : ""}`}>
+    <div className={`rounded-lg border p-4 transition-colors ${fullyPurchased && !isOwner ? "bg-muted/50 opacity-75" : ""}`}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-semibold leading-tight">{item.name}</h3>
         <Badge className={PRIORITY_COLORS[item.priority] || ""} variant="secondary">
@@ -50,7 +67,7 @@ export function ItemCard({ item, registrySlug, isOwner, onEdit }: ItemCardProps)
         )}
         {item.quantity_desired > 1 && (
           <span className="text-xs text-muted-foreground">
-            Qty: {item.quantity_purchased}/{item.quantity_desired}
+            Qty: {isOwner ? item.quantity_desired : `${totalPurchased}/${item.quantity_desired}`}
           </span>
         )}
       </div>
@@ -59,6 +76,28 @@ export function ItemCard({ item, registrySlug, isOwner, onEdit }: ItemCardProps)
         <p className="mt-2 text-xs text-muted-foreground italic">
           {item.notes}
         </p>
+      )}
+
+      {/* Purchase info — only visible to subscribers, NEVER to owner */}
+      {!isOwner && isSubscriber && (
+        <>
+          <PurchaseBadge purchases={itemPurchases} profiles={purchaserProfiles} />
+          {!fullyPurchased && currentUserId && (
+            <div className="mt-3">
+              <PurchaseButton
+                itemId={item.id}
+                registrySlug={registrySlug}
+                currentUserId={currentUserId}
+                purchases={itemPurchases}
+              />
+            </div>
+          )}
+          {fullyPurchased && (
+            <p className="mt-2 text-xs font-medium text-green-600">
+              Fully purchased
+            </p>
+          )}
+        </>
       )}
 
       <div className="mt-3 flex items-center gap-2">

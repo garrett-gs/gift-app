@@ -3,15 +3,27 @@
 import { useState } from "react";
 import { ItemCard } from "@/components/items/item-card";
 import { EditItemDialog } from "@/components/items/edit-item-dialog";
-import type { RegistryItem } from "@/lib/types";
+import type { RegistryItem, Purchase, Profile } from "@/lib/types";
 
 interface ItemGridProps {
   items: RegistryItem[];
   registrySlug: string;
   isOwner: boolean;
+  isSubscriber: boolean;
+  currentUserId?: string;
+  purchases?: Purchase[];
+  purchaserProfiles?: Profile[];
 }
 
-export function ItemGrid({ items, registrySlug, isOwner }: ItemGridProps) {
+export function ItemGrid({
+  items,
+  registrySlug,
+  isOwner,
+  isSubscriber,
+  currentUserId,
+  purchases = [],
+  purchaserProfiles = [],
+}: ItemGridProps) {
   const [editingItem, setEditingItem] = useState<RegistryItem | null>(null);
 
   return (
@@ -23,6 +35,10 @@ export function ItemGrid({ items, registrySlug, isOwner }: ItemGridProps) {
             item={item}
             registrySlug={registrySlug}
             isOwner={isOwner}
+            isSubscriber={isSubscriber}
+            currentUserId={currentUserId}
+            purchases={purchases}
+            purchaserProfiles={purchaserProfiles}
             onEdit={isOwner ? setEditingItem : undefined}
           />
         ))}
