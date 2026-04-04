@@ -30,11 +30,11 @@ export default async function AppLayout({
     .eq("is_read", false);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-x-hidden">
       <AppSidebar />
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <TopNav displayName={displayName} unreadNotifications={count || 0} />
-        <main className="flex-1 px-4 py-6 md:px-8">{children}</main>
+        <main className="flex-1 overflow-x-hidden px-4 py-6 md:px-8">{children}</main>
       </div>
     </div>
   );
