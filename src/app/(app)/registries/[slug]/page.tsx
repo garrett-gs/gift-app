@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Calendar, Gift } from "lucide-react";
+import { Pencil, Calendar, Gift, Share2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -92,6 +92,13 @@ export default async function RegistryDetailPage({ params }: Props) {
         {isOwner && (
           <div className="flex items-center gap-2">
             <AddItemDialog registryId={registry.id} />
+            <Link
+              href={`/registries/${slug}/share`}
+              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
+            >
+              <Share2 className="h-4 w-4" />
+              Share
+            </Link>
             <Link
               href={`/registries/${slug}/edit`}
               className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
