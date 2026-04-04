@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { AddItemDialog } from "@/components/items/add-item-dialog";
 import { ItemGrid } from "@/components/items/item-grid";
 import { OCCASION_TYPES } from "@/lib/constants";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import type { Purchase, Profile } from "@/lib/types";

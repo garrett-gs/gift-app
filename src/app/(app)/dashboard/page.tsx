@@ -3,7 +3,7 @@ import { Plus, List } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { RegistryCard } from "@/components/registry/registry-card";
 import { EmptyState } from "@/components/shared/empty-state";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 
