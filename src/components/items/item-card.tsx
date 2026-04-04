@@ -45,7 +45,15 @@ export function ItemCard({
   const fullyPurchased = totalPurchased >= item.quantity_desired;
 
   return (
-    <div className={`rounded-lg border p-4 transition-colors ${fullyPurchased && !isOwner ? "bg-muted/50 opacity-75" : ""}`}>
+    <div className={`overflow-hidden rounded-lg border transition-colors ${fullyPurchased && !isOwner ? "bg-muted/50 opacity-75" : ""}`}>
+      {item.image_url && (
+        <img
+          src={item.image_url}
+          alt={item.name}
+          className="h-40 w-full object-cover"
+        />
+      )}
+      <div className="p-4">
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-semibold leading-tight">{item.name}</h3>
         <Badge className={PRIORITY_COLORS[item.priority] || ""} variant="secondary">
@@ -153,6 +161,7 @@ export function ItemCard({
             )}
           </div>
         )}
+      </div>
       </div>
     </div>
   );

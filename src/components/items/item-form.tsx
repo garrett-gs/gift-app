@@ -13,7 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PRIORITY_LABELS } from "@/lib/constants";
+import { ImageUpload } from "@/components/items/image-upload";
+import { BarcodeScanner } from "@/components/items/barcode-scanner";
+import {
+  PRIORITY_LABELS,
+  ITEM_CATEGORIES,
+  CLOTHING_SIZES,
+  SHOE_SIZES,
+} from "@/lib/constants";
 import type { RegistryItem } from "@/lib/types";
 
 interface ItemFormProps {
@@ -26,9 +33,45 @@ interface ItemFormProps {
 export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState(item?.image_url || "");
+  const [category, setCategory] = useState(
+    (item as any)?.category || "general"
+  );
+  const [selectedSize, setSelectedSize] = useState(
+    (item as any)?.size || ""
+  );
+
+  // Form field state for barcode auto-fill
+  const [name, setName] = useState(item?.name || "");
+  const [description, setDescription] = useState(item?.description || "");
+  const [price, setPrice] = useState(item?.price != null ? String(item.price) : "");
+  const [url, setUrl] = useState(item?.url || "");
+
   const router = useRouter();
 
+  const showSizes = category === "clothing";
+  const showShoeSizes = category === "shoes";
+
+  function handleProductFound(product: {
+    name: string;
+    description?: string;
+    price?: number;
+    imageUrl?: string;
+    url?: string;
+  }) {
+    if (product.name) setName(product.name);
+    if (product.description) setDescription(product.description);
+    if (product.price) setPrice(String(product.price));
+    if (product.imageUrl) setImageUrl(product.imageUrl);
+    if (product.url) setUrl(product.url);
+  }
+
   async function handleSubmit(formData: FormData) {
+    // Append values managed by state
+    formData.set("imageUrl", imageUrl);
+    formData.set("category", category);
+    formData.set("size", selectedSize);
+
     setPending(true);
     setError(null);
     const result = await action(formData);
@@ -44,13 +87,26 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
 
   return (
     <form action={handleSubmit} className="space-y-6">
+      {/* Barcode Scanner */}
+      <BarcodeScanner onProductFound={handleProductFound} />
+
+      {/* Image Upload */}
+      <div className="space-y-2">
+        <Label>Photo</Label>
+        <ImageUpload
+          currentImageUrl={imageUrl || null}
+          onImageUploaded={setImageUrl}
+        />
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="name">Item name</Label>
         <Input
           id="name"
           name="name"
           placeholder="e.g., Wireless Headphones"
-          defaultValue={item?.name}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           required
         />
       </div>
@@ -61,7 +117,8 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
           id="description"
           name="description"
           placeholder="Any details about the item..."
-          defaultValue={item?.description || ""}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           rows={3}
         />
       </div>
@@ -76,7 +133,8 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
             step="0.01"
             min="0"
             placeholder="0.00"
-            defaultValue={item?.price ?? ""}
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
           />
         </div>
 
@@ -100,9 +158,73 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
           name="url"
           type="url"
           placeholder="https://..."
-          defaultValue={item?.url || ""}
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
         />
       </div>
+
+      {/* Category */}
+      <div className="space-y-2">
+        <Label>Category</Label>
+        <Select value={category} onValueChange={setCategory}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            {ITEM_CATEGORIES.map((cat) => (
+              <SelectItem key={cat.value} value={cat.value}>
+                {cat.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Clothing Sizes */}
+      {showSizes && (
+        <div className="space-y-2">
+          <Label>Size</Label>
+          <div className="flex flex-wrap gap-2">
+            {CLOTHING_SIZES.map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => setSelectedSize(selectedSize === size ? "" : size)}
+                className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  selectedSize === size
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border hover:bg-muted"
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Shoe Sizes */}
+      {showShoeSizes && (
+        <div className="space-y-2">
+          <Label>Shoe Size</Label>
+          <div className="flex flex-wrap gap-2">
+            {SHOE_SIZES.map((size) => (
+              <button
+                key={size}
+                type="button"
+                onClick={() => setSelectedSize(selectedSize === size ? "" : size)}
+                className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  selectedSize === size
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border hover:bg-muted"
+                }`}
+              >
+                {size}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="priority">Priority</Label>
@@ -125,7 +247,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
         <Textarea
           id="notes"
           name="notes"
-          placeholder="Size, color, specific model..."
+          placeholder="Color preference, specific model..."
           defaultValue={item?.notes || ""}
           rows={2}
         />

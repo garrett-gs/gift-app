@@ -20,6 +20,19 @@ export async function addItem(
     quantityDesired: formData.get("quantityDesired") || 1,
   };
 
+  const imageUrl = formData.get("imageUrl") as string || null;
+  const category = formData.get("category") as string || "general";
+  const size = formData.get("size") as string || null;
+
+  // Append size info to notes if provided
+  let notes = raw.notes as string || "";
+  if (size) {
+    notes = notes ? `Size: ${size} | ${notes}` : `Size: ${size}`;
+  }
+  if (category && category !== "general") {
+    notes = notes ? `${notes} | Category: ${category}` : `Category: ${category}`;
+  }
+
   const parsed = itemSchema.safeParse(raw);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
@@ -38,20 +51,25 @@ export async function addItem(
     return { success: false, error: "Registry not found" };
   }
 
-  const { error } = await supabase.from("registry_items").insert({
+  const { data, error } = await supabase.from("registry_items").insert({
     registry_id: registryId,
     name: parsed.data.name,
     description: parsed.data.description || null,
     price: parsed.data.price ?? null,
     currency: parsed.data.currency,
     url: parsed.data.url || null,
+    image_url: imageUrl,
     priority: parsed.data.priority,
-    notes: parsed.data.notes || null,
+    notes: notes || null,
     quantity_desired: parsed.data.quantityDesired,
-  });
+  }).select().single();
 
   if (error) {
     return { success: false, error: error.message };
+  }
+
+  if (!data) {
+    return { success: false, error: "Failed to add item. Please try again." };
   }
 
   revalidatePath(`/registries/${registry.slug}`);
@@ -74,6 +92,18 @@ export async function updateItem(
     quantityDesired: formData.get("quantityDesired") || 1,
   };
 
+  const imageUrl = formData.get("imageUrl") as string || null;
+  const category = formData.get("category") as string || "general";
+  const size = formData.get("size") as string || null;
+
+  let notes = raw.notes as string || "";
+  if (size) {
+    notes = notes ? `Size: ${size} | ${notes}` : `Size: ${size}`;
+  }
+  if (category && category !== "general") {
+    notes = notes ? `${notes} | Category: ${category}` : `Category: ${category}`;
+  }
+
   const parsed = itemSchema.safeParse(raw);
   if (!parsed.success) {
     return { success: false, error: parsed.error.issues[0].message };
@@ -89,8 +119,9 @@ export async function updateItem(
       price: parsed.data.price ?? null,
       currency: parsed.data.currency,
       url: parsed.data.url || null,
+      image_url: imageUrl,
       priority: parsed.data.priority,
-      notes: parsed.data.notes || null,
+      notes: notes || null,
       quantity_desired: parsed.data.quantityDesired,
     })
     .eq("id", itemId);
