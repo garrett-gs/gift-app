@@ -141,9 +141,9 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
         currentImageUrl={imageUrl || null}
         onImageUploaded={setImageUrl}
         onProductIdentified={(product) => {
-          if (product.name && !name) setName(product.name);
-          if (product.price && !price) setPrice(String(product.price));
-          if (product.url && !url) setUrl(product.url);
+          if (product.name) setName((prev) => prev || product.name!);
+          if (product.price) setPrice((prev) => prev || String(product.price));
+          if (product.url) setUrl((prev) => prev || product.url!);
         }}
       />
       {imageUrl && url && (
