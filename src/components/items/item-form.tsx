@@ -146,6 +146,11 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
           if (product.url && !url) setUrl(product.url);
         }}
       />
+      {imageUrl && url && (
+        <p className="text-xs text-muted-foreground -mt-2">
+          Tip: If this isn&apos;t the right color or style, screenshot the one you want and tap &quot;Replace&quot;
+        </p>
+      )}
 
       {/* Name - always visible */}
       <div className="space-y-1">

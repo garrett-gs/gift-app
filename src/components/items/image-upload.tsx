@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Camera, Upload, X, ScanSearch, Loader2, ExternalLink } from "lucide-react";
+import { Camera, Upload, X, ScanSearch, Loader2, ExternalLink, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -25,6 +25,7 @@ export function ImageUpload({
   const [identifying, setIdentifying] = useState(false);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(currentImageUrl || null);
   const [lensUrl, setLensUrl] = useState<string | null>(null);
+  const [isAutoFilled, setIsAutoFilled] = useState(!!currentImageUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -38,6 +39,7 @@ export function ImageUpload({
 
     // Upload to Supabase Storage
     setUploading(true);
+    setIsAutoFilled(false);
     const supabase = createClient();
     const {
       data: { user },
@@ -114,10 +116,15 @@ export function ImageUpload({
     setPreview(null);
     setUploadedUrl(null);
     setLensUrl(null);
+    setIsAutoFilled(false);
     onImageUploaded("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  }
+
+  function handleReplace() {
+    fileInputRef.current?.click();
   }
 
   return (
@@ -129,6 +136,8 @@ export function ImageUpload({
             alt="Item preview"
             className="h-48 w-full rounded-lg border object-cover"
           />
+
+          {/* Top right: remove button */}
           <Button
             type="button"
             variant="destructive"
@@ -139,41 +148,48 @@ export function ImageUpload({
             <X className="h-3 w-3" />
           </Button>
 
-          {/* Identify / Google Lens buttons */}
-          {uploadedUrl && onProductIdentified && (
-            <div className="absolute bottom-2 left-2 right-2 flex gap-2">
-              {identifying ? (
-                <div className="flex items-center gap-2 rounded-md bg-black/70 px-3 py-1.5 text-xs text-white">
+          {/* Bottom overlay: replace + identify */}
+          <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between rounded-b-lg bg-black/60 px-3 py-2">
+            <button
+              type="button"
+              onClick={handleReplace}
+              className="flex items-center gap-1 text-xs text-white hover:text-white/80"
+            >
+              <RefreshCw className="h-3 w-3" />
+              {isAutoFilled ? "Wrong image? Replace" : "Replace photo"}
+            </button>
+
+            <div className="flex gap-2">
+              {uploadedUrl && onProductIdentified && !identifying && (
+                <button
+                  type="button"
+                  onClick={() => identifyProduct(uploadedUrl)}
+                  className="flex items-center gap-1 text-xs text-white hover:text-white/80"
+                >
+                  <ScanSearch className="h-3 w-3" />
+                  Identify
+                </button>
+              )}
+              {identifying && (
+                <span className="flex items-center gap-1 text-xs text-white">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  Identifying product...
-                </div>
-              ) : (
-                <>
-                  <Button
-                    type="button"
-                    size="xs"
-                    className="gap-1 bg-black/70 hover:bg-black/90 text-white border-0"
-                    onClick={() => identifyProduct(uploadedUrl)}
-                  >
-                    <ScanSearch className="h-3 w-3" />
-                    Identify
-                  </Button>
-                  {lensUrl && (
-                    <a
-                      href={lensUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 rounded-md bg-black/70 px-2 py-1 text-xs text-white hover:bg-black/90"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Google Lens
-                    </a>
-                  )}
-                </>
+                  Identifying...
+                </span>
+              )}
+              {lensUrl && (
+                <a
+                  href={lensUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs text-white hover:text-white/80"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  Lens
+                </a>
               )}
             </div>
-          )}
+          </div>
         </div>
       ) : (
         <div
