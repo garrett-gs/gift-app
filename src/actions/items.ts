@@ -191,6 +191,25 @@ export async function updateItem(
   return { success: true, data: undefined };
 }
 
+export async function markReceived(
+  itemId: string,
+  registrySlug: string
+): Promise<ActionResult> {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("registry_items")
+    .update({ is_archived: true })
+    .eq("id", itemId);
+
+  if (error) {
+    return { success: false, error: error.message };
+  }
+
+  revalidatePath(`/registries/${registrySlug}`);
+  return { success: true, data: undefined };
+}
+
 export async function deleteItem(
   itemId: string,
   registrySlug: string

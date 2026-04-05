@@ -1,10 +1,12 @@
 "use client";
 
-import { ExternalLink, MapPin } from "lucide-react";
+import { useState } from "react";
+import { ExternalLink, MapPin, GiftIcon, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/constants";
 import { PurchaseButton } from "@/components/items/purchase-button";
 import { PurchaseBadge } from "@/components/items/purchase-badge";
+import { markReceived } from "@/actions/items";
 import type { RegistryItem, Purchase, Profile } from "@/lib/types";
 
 interface ItemCardProps {
@@ -28,9 +30,32 @@ export function ItemCard({
   purchaserProfiles = [],
   onTap,
 }: ItemCardProps) {
+  const [receiving, setReceiving] = useState(false);
+  const [received, setReceived] = useState(false);
   const itemPurchases = purchases.filter((p) => p.item_id === item.id);
   const totalPurchased = itemPurchases.reduce((sum, p) => sum + p.quantity, 0);
   const fullyPurchased = totalPurchased >= item.quantity_desired;
+
+  async function handleMarkReceived(e: React.MouseEvent) {
+    e.stopPropagation();
+    setReceiving(true);
+    const result = await markReceived(item.id, registrySlug);
+    if (result.success) {
+      setReceived(true);
+    }
+    setReceiving(false);
+  }
+
+  if (received) {
+    return (
+      <div className="flex items-center justify-center rounded-lg border border-dashed p-8 text-center">
+        <div>
+          <GiftIcon className="mx-auto h-8 w-8 text-green-600" />
+          <p className="mt-2 text-sm font-medium text-green-600">Received!</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -123,6 +148,24 @@ export function ItemCard({
               <ExternalLink className="h-3 w-3" />
               {!isOwner ? "Buy this item" : "View product"}
             </a>
+          </div>
+        )}
+
+        {/* Mark as received — only visible to owner */}
+        {isOwner && (
+          <div className="mt-3 pt-2 border-t" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={handleMarkReceived}
+              disabled={receiving}
+              className="w-full flex items-center justify-center gap-1.5 rounded-md bg-green-50 py-2 text-xs font-medium text-green-700 hover:bg-green-100 transition-colors disabled:opacity-50"
+            >
+              {receiving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <GiftIcon className="h-3.5 w-3.5" />
+              )}
+              {receiving ? "Removing..." : "Got it! Mark as received"}
+            </button>
           </div>
         )}
       </div>
