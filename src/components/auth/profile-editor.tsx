@@ -64,7 +64,7 @@ export function ProfileEditor({ profile }: { profile: Profile }) {
         avatar_url: avatarUrl || null,
         birthday: birthday || null,
         anniversary: anniversary || null,
-        special_occasions: validOccasions,
+        special_occasions: JSON.parse(JSON.stringify(validOccasions)),
         bio: bio || null,
         interests: interests || null,
         dislikes: dislikes || null,
