@@ -34,7 +34,7 @@ export default async function AppLayout({
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopNav displayName={displayName} unreadNotifications={count || 0} />
-        <main className="flex-1 overflow-x-hidden px-4 py-6 md:px-8">{children}</main>
+        <main className="flex-1 overflow-x-hidden px-4 py-6 pb-24 md:px-8 md:pb-6">{children}</main>
       </div>
     </div>
   );

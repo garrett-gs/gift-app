@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart, Cake, ChevronRight } from "lucide-react";
+import { Heart, Cake } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/shared/empty-state";
 import { NearbyAlert } from "@/components/shared/nearby-alert";
@@ -245,7 +245,6 @@ export default async function MyPeoplePage() {
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
                 </Link>
               );
             })}
