@@ -126,12 +126,10 @@ export default async function PersonProfilePage({ params }: Props) {
             <div className="mt-4 min-w-0 flex-1 sm:mt-0">
               <div className="flex items-center justify-between gap-3">
                 <h1 className="text-xl font-bold">{profile.display_name}</h1>
-                {theirRegistries.length > 0 && (
-                  <FollowAllButton
-                    registryIds={theirRegistries.filter((r) => !r.isFollowing).map((r) => r.id)}
-                    alreadyFollowingAll={allFollowed}
-                  />
-                )}
+                <FollowAllButton
+                  registryIds={theirRegistries.filter((r) => !r.isFollowing).map((r) => r.id)}
+                  alreadyFollowingAll={allFollowed}
+                />
               </div>
 
               {profile.bio && (

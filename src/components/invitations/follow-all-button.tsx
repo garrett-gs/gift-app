@@ -17,6 +17,11 @@ export function FollowAllButton({ registryIds, alreadyFollowingAll }: FollowAllB
   const router = useRouter();
 
   async function handleFollow() {
+    if (registryIds.length === 0) {
+      // No registries to follow yet — just show as followed
+      setDone(true);
+      return;
+    }
     setPending(true);
     for (const id of registryIds) {
       await subscribe(id);
