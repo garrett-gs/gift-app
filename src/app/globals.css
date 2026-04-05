@@ -49,39 +49,38 @@
 }
 
 :root {
-  /* Clean white theme with gold accents */
-  --background: oklch(0.985 0 0);
+  --background: oklch(0.75 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.45 0.12 55);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.96 0.01 85);
-  --secondary-foreground: oklch(0.25 0.05 55);
-  --muted: oklch(0.96 0.005 85);
-  --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.94 0.02 85);
-  --accent-foreground: oklch(0.25 0.05 55);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.93 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  --accent: oklch(0.93 0 0);
+  --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.88 0.01 85);
-  --input: oklch(0.88 0.01 85);
-  --ring: oklch(0.6 0.12 55);
-  --chart-1: oklch(0.7 0.15 55);
-  --chart-2: oklch(0.55 0.1 55);
-  --chart-3: oklch(0.45 0.12 55);
-  --chart-4: oklch(0.35 0.08 55);
-  --chart-5: oklch(0.25 0.05 55);
+  --border: oklch(0.87 0 0);
+  --input: oklch(0.87 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
   --radius: 0.75rem;
-  --sidebar: oklch(0.15 0.01 55);
-  --sidebar-foreground: oklch(0.92 0.03 85);
-  --sidebar-primary: oklch(0.75 0.14 75);
-  --sidebar-primary-foreground: oklch(0.13 0 0);
-  --sidebar-accent: oklch(0.22 0.01 55);
-  --sidebar-accent-foreground: oklch(0.88 0.05 85);
-  --sidebar-border: oklch(0.35 0.03 55 / 30%);
-  --sidebar-ring: oklch(0.75 0.14 75 / 50%);
+  --sidebar: oklch(0.15 0 0);
+  --sidebar-foreground: oklch(0.93 0 0);
+  --sidebar-primary: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.145 0 0);
+  --sidebar-accent: oklch(0.25 0 0);
+  --sidebar-accent-foreground: oklch(0.93 0 0);
+  --sidebar-border: oklch(0.3 0 0);
+  --sidebar-ring: oklch(0.5 0 0);
 }
 
 .dark {
@@ -91,8 +90,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.75 0.14 75);
-  --primary-foreground: oklch(0.13 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -105,8 +104,8 @@
   --ring: oklch(0.556 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.75 0.14 75);
-  --sidebar-primary-foreground: oklch(0.13 0 0);
+  --sidebar-primary: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
@@ -121,155 +120,31 @@
     @apply overflow-x-hidden;
   }
   body {
-    @apply text-foreground;
+    @apply bg-background text-foreground;
   }
   html {
     @apply font-sans;
   }
 }
 
-/* ============================================
-   GOLD WRAPPING PAPER BACKGROUND
-   Metallic gold with black paisley pattern
-   ============================================ */
-body {
-  background-color: #c9a84c;
-  background-image:
-    /* Metallic gold gradient shimmer */
-    linear-gradient(
-      135deg,
-      #d4af37 0%,
-      #f2d06b 15%,
-      #c9a84c 25%,
-      #e8c84a 40%,
-      #d4af37 50%,
-      #b8942e 60%,
-      #e0c058 75%,
-      #d4af37 85%,
-      #c49b30 100%
-    );
-}
-
-/* SVG paisley pattern overlay */
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.12;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cdefs%3E%3Cstyle%3E.p%7Bfill:none;stroke:%23000;stroke-width:1.2%7D%3C/style%3E%3C/defs%3E%3C!-- Paisley 1 --%3E%3Cpath class='p' d='M30 80c0-30 25-55 50-50s20 40 0 55-50 25-50-5z'/%3E%3Cpath class='p' d='M45 75c0-15 12-28 25-25s10 20 0 28-25 12-25-3z'/%3E%3Ccircle cx='55' cy='65' r='3' fill='%23000' opacity='0.4'/%3E%3Cpath class='p' d='M35 82c5 10 15 15 25 12'/%3E%3Cpath class='p' d='M38 88c4 8 12 12 20 10'/%3E%3C!-- Swirl fills --%3E%3Ccircle cx='42' cy='70' r='1.5' fill='%23000' opacity='0.3'/%3E%3Ccircle cx='48' cy='60' r='1.5' fill='%23000' opacity='0.3'/%3E%3Ccircle cx='60' cy='58' r='1' fill='%23000' opacity='0.3'/%3E%3C!-- Paisley 2 rotated --%3E%3Cg transform='translate(140,30) rotate(160) scale(0.7)'%3E%3Cpath class='p' d='M30 80c0-30 25-55 50-50s20 40 0 55-50 25-50-5z'/%3E%3Cpath class='p' d='M45 75c0-15 12-28 25-25s10 20 0 28-25 12-25-3z'/%3E%3Ccircle cx='55' cy='65' r='3' fill='%23000' opacity='0.4'/%3E%3C/g%3E%3C!-- Paisley 3 --%3E%3Cg transform='translate(100,140) rotate(90) scale(0.6)'%3E%3Cpath class='p' d='M30 80c0-30 25-55 50-50s20 40 0 55-50 25-50-5z'/%3E%3Cpath class='p' d='M45 75c0-15 12-28 25-25s10 20 0 28-25 12-25-3z'/%3E%3Ccircle cx='55' cy='65' r='3' fill='%23000' opacity='0.4'/%3E%3Cpath class='p' d='M35 82c5 10 15 15 25 12'/%3E%3C/g%3E%3C!-- Small decorative dots --%3E%3Ccircle cx='10' cy='10' r='2' fill='%23000' opacity='0.15'/%3E%3Ccircle cx='110' cy='100' r='2' fill='%23000' opacity='0.15'/%3E%3Ccircle cx='180' cy='170' r='2' fill='%23000' opacity='0.15'/%3E%3Ccircle cx='15' cy='150' r='1.5' fill='%23000' opacity='0.15'/%3E%3Ccircle cx='170' cy='90' r='1.5' fill='%23000' opacity='0.15'/%3E%3C!-- Fine swirl details --%3E%3Cpath class='p' d='M160 160c8-5 12-15 8-22' opacity='0.5'/%3E%3Cpath class='p' d='M165 162c6-4 9-12 6-18' opacity='0.5'/%3E%3Cpath class='p' d='M5 45c5-8 15-12 22-8' opacity='0.5'/%3E%3Cpath class='p' d='M3 50c4-6 12-9 18-6' opacity='0.5'/%3E%3C!-- Tiny leaf shapes --%3E%3Cpath class='p' d='M90 15c3-5 8-5 8 0s-5 5-8 0z' opacity='0.4'/%3E%3Cpath class='p' d='M130 115c3-5 8-5 8 0s-5 5-8 0z' opacity='0.4'/%3E%3Cpath class='p' d='M20 180c3-5 8-5 8 0s-5 5-8 0z' opacity='0.4'/%3E%3C/svg%3E");
-  background-size: 200px 200px;
-}
-
-/* White content area floats over the gold */
-#__next > div,
-body > div:first-child {
-  position: relative;
-  z-index: 1;
-}
-
-/* Main content area - solid white */
+/* White content area */
 main {
   background: white;
-  position: relative;
-  z-index: 1;
 }
 
-/* Top bar - white with subtle gold bottom border */
+/* Top bar */
 header.sticky {
-  background: oklch(1 0 0 / 97%) !important;
-  backdrop-filter: blur(12px);
-  border-bottom: 2px solid #d4af37 !important;
-}
-
-/* Bottom tab bar - white with gold top border */
-nav.fixed {
-  background: oklch(1 0 0 / 97%) !important;
-  backdrop-filter: blur(12px);
-  border-top: 2px solid #d4af37 !important;
-}
-
-/* Active tab in gold */
-nav.fixed a.text-primary {
-  color: #b8942e !important;
-}
-
-/* Sidebar - dark with gold accents */
-aside {
-  background: oklch(0.13 0.01 55 / 98%) !important;
-  border-color: #d4af37 !important;
-}
-
-/* Cards - solid white, no bleed-through */
-[data-slot="card"] {
   background: white !important;
-  box-shadow: 0 2px 12px oklch(0 0 0 / 10%), 0 1px 3px oklch(0 0 0 / 6%);
-  position: relative;
-  z-index: 1;
+  border-bottom: 1px solid oklch(0.87 0 0) !important;
 }
 
-/* Primary buttons in rich gold */
-[data-slot="button"].bg-primary,
-button.bg-primary {
-  background: linear-gradient(135deg, #d4af37, #c49b30, #d4af37) !important;
-  color: white !important;
-  border: none !important;
-  box-shadow: 0 2px 8px oklch(0 0 0 / 15%);
-  font-weight: 600;
+/* Bottom tab bar */
+nav.fixed {
+  background: white !important;
+  border-top: 1px solid oklch(0.87 0 0) !important;
 }
 
-[data-slot="button"].bg-primary:hover,
-button.bg-primary:hover {
-  background: linear-gradient(135deg, #c49b30, #b8942e, #c49b30) !important;
-}
-
-/* Outline buttons with gold border */
-[data-slot="button"][data-variant="outline"],
-button.border {
-  border-color: #d4af37 !important;
-  color: #9e7e24 !important;
-}
-
-/* Links in gold */
-a.text-primary {
-  color: #9e7e24 !important;
-}
-
-/* Badge styling */
-.bg-pink-100 {
-  background: #fef3cd !important;
-  color: #856404 !important;
-}
-
-/* Auth pages - center the card over the gold background */
-body:has([data-slot="card"]:only-child) main,
-.flex.min-h-screen {
-  background: transparent !important;
-}
-
-/* Landing page transparent */
-body:has(.flex.min-h-screen) main {
-  background: transparent !important;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: oklch(0.95 0 0);
-}
-
-::-webkit-scrollbar-thumb {
-  background: #d4af37;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #b8942e;
+/* Cards */
+[data-slot="card"] {
+  box-shadow: 0 1px 3px oklch(0 0 0 / 8%);
 }

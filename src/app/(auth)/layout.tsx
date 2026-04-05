@@ -7,8 +7,8 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4" style={{ background: "transparent" }}>
-      <Link href="/" className="mb-8 flex items-center gap-2 text-white drop-shadow-md">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+      <Link href="/" className="mb-8 flex items-center gap-2">
         <Gift className="h-8 w-8" />
         <span className="text-2xl font-bold">GIFT</span>
       </Link>
