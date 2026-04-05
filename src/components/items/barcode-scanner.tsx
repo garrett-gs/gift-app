@@ -17,6 +17,7 @@ interface BarcodeScannerProps {
 export function BarcodeScanner({ onProductFound }: BarcodeScannerProps) {
   const [scanning, setScanning] = useState(false);
   const [looking, setLooking] = useState(false);
+  const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -36,47 +37,35 @@ export function BarcodeScanner({ onProductFound }: BarcodeScannerProps) {
 
   async function lookupBarcode(barcode: string) {
     setLooking(true);
+    setScannedCode(barcode);
     setError(null);
 
     try {
-      // Try UPC itemdb first
-      const upcRes = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`);
-      if (upcRes.ok) {
-        const upcData = await upcRes.json();
-        if (upcData.items && upcData.items.length > 0) {
-          const item = upcData.items[0];
+      const res = await fetch("/api/barcode-lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ barcode }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.found) {
           onProductFound({
-            name: item.title || "",
-            description: item.description || "",
-            price: item.lowest_recorded_price ? Number(item.lowest_recorded_price) : undefined,
-            imageUrl: item.images?.[0] || "",
-            url: item.offers?.[0]?.link || "",
+            name: data.name,
+            description: data.description || undefined,
+            price: data.price || undefined,
+            imageUrl: data.imageUrl || undefined,
+            url: data.url || undefined,
           });
           setLooking(false);
+          setScannedCode(null);
           return;
         }
       }
 
-      // Fallback to Open Food Facts (good for food/grocery items)
-      const offRes = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`);
-      if (offRes.ok) {
-        const offData = await offRes.json();
-        if (offData.status === 1 && offData.product) {
-          const p = offData.product;
-          onProductFound({
-            name: p.product_name || "",
-            description: p.generic_name || "",
-            imageUrl: p.image_url || "",
-          });
-          setLooking(false);
-          return;
-        }
-      }
-
-      // Nothing found — still pass the barcode
-      setError(`No product found for barcode ${barcode}. You can fill in the details manually.`);
+      setError(`No product found for barcode ${barcode}. Fill in the name and snap a photo!`);
     } catch {
-      setError("Could not look up product. Please fill in details manually.");
+      setError("Lookup failed. Fill in the details manually.");
     }
 
     setLooking(false);
@@ -84,6 +73,7 @@ export function BarcodeScanner({ onProductFound }: BarcodeScannerProps) {
 
   async function startScanning() {
     setError(null);
+    setScannedCode(null);
     setScanning(true);
 
     try {
@@ -100,7 +90,7 @@ export function BarcodeScanner({ onProductFound }: BarcodeScannerProps) {
         videoRef.current.srcObject = stream;
       }
 
-      reader.decodeFromVideoElement(videoRef.current!, (result, err) => {
+      reader.decodeFromVideoElement(videoRef.current!, (result) => {
         if (result) {
           const barcode = result.getText();
           stopScanning();
@@ -113,7 +103,6 @@ export function BarcodeScanner({ onProductFound }: BarcodeScannerProps) {
     }
   }
 
-  // Clean up on unmount
   useEffect(() => {
     return () => {
       if (streamRef.current) {
@@ -126,7 +115,9 @@ export function BarcodeScanner({ onProductFound }: BarcodeScannerProps) {
     return (
       <div className="flex items-center gap-2 rounded-lg border border-dashed p-4">
         <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="text-sm text-muted-foreground">Looking up product...</span>
+        <span className="text-sm text-muted-foreground">
+          Looking up barcode {scannedCode}...
+        </span>
       </div>
     );
   }
