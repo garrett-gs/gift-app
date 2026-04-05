@@ -13,6 +13,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ found: false, error: "Vision API not configured" });
     }
 
+    // Download image and convert to base64 (Google Vision can't access most storage URLs)
+    let imagePayload: Record<string, unknown>;
+    try {
+      const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(10000) });
+      if (imgRes.ok) {
+        const buffer = await imgRes.arrayBuffer();
+        const base64 = Buffer.from(buffer).toString("base64");
+        imagePayload = { content: base64 };
+      } else {
+        // Fall back to URL-based detection
+        imagePayload = { source: { imageUri: imageUrl } };
+      }
+    } catch {
+      // Fall back to URL-based detection
+      imagePayload = { source: { imageUri: imageUrl } };
+    }
+
     // Call Google Cloud Vision API with WEB_DETECTION
     const visionRes = await fetch(
       `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
@@ -22,7 +39,7 @@ export async function POST(request: Request) {
         body: JSON.stringify({
           requests: [
             {
-              image: { source: { imageUri: imageUrl } },
+              image: imagePayload,
               features: [
                 { type: "WEB_DETECTION", maxResults: 10 },
                 { type: "PRODUCT_SEARCH_RESULTS", maxResults: 5 },
