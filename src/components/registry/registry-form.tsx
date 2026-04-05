@@ -47,7 +47,7 @@ export function RegistryForm({ registry, action, submitLabel }: RegistryFormProp
       {/* Occasion first */}
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="occasion">Occasion (optional)</Label>
+          <Label htmlFor="occasion">Occasion</Label>
           <Select name="occasion" defaultValue={registry?.occasion || "wishlist"}>
             <SelectTrigger>
               <SelectValue placeholder="Select occasion" />
@@ -75,13 +75,12 @@ export function RegistryForm({ registry, action, submitLabel }: RegistryFormProp
 
       {/* Registry name */}
       <div className="space-y-2">
-        <Label htmlFor="title">Registry name</Label>
+        <Label htmlFor="title">Registry name (optional)</Label>
         <Input
           id="title"
           name="title"
-          placeholder="e.g., My Birthday 2026"
+          placeholder="Auto-generated from occasion if left blank"
           defaultValue={registry?.title}
-          required
         />
       </div>
 

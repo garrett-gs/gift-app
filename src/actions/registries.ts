@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { registrySchema } from "@/lib/validators/registry";
+import { OCCASION_TYPES } from "@/lib/constants";
 import type { ActionResult } from "@/lib/types";
 
 function generateSlug(title: string): string {
@@ -38,13 +39,18 @@ export async function createRegistry(formData: FormData): Promise<ActionResult<s
     return { success: false, error: "Not authenticated" };
   }
 
-  const slug = generateSlug(parsed.data.title);
+  // Auto-generate title from occasion if not provided
+  const occasionLabel = OCCASION_TYPES.find(
+    (o) => o.value === parsed.data.occasion
+  )?.label || "My Registry";
+  const title = parsed.data.title || occasionLabel;
+  const slug = generateSlug(title);
 
   const coverImageUrl = formData.get("coverImageUrl") as string || null;
 
   const { data, error } = await supabase.from("registries").insert({
     owner_id: user.id,
-    title: parsed.data.title,
+    title,
     description: parsed.data.description || null,
     occasion: parsed.data.occasion || null,
     occasion_date: parsed.data.occasionDate || null,
