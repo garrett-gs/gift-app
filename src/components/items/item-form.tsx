@@ -139,6 +139,11 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
       <ImageUpload
         currentImageUrl={imageUrl || null}
         onImageUploaded={setImageUrl}
+        onProductIdentified={(product) => {
+          if (product.name && !name) setName(product.name);
+          if (product.price && !price) setPrice(String(product.price));
+          if (product.url && !url) setUrl(product.url);
+        }}
       />
 
       {/* Name - always visible */}
