@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Camera, Upload, X, ScanSearch, Loader2, ExternalLink, RefreshCw } from "lucide-react";
+import { Camera, Upload, X, ScanSearch, Loader2, RefreshCw, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
@@ -23,8 +23,8 @@ export function ImageUpload({
   const [preview, setPreview] = useState<string | null>(currentImageUrl || null);
   const [uploading, setUploading] = useState(false);
   const [identifying, setIdentifying] = useState(false);
+  const [identifyResult, setIdentifyResult] = useState<string | null>(null);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(currentImageUrl || null);
-  const [lensUrl, setLensUrl] = useState<string | null>(null);
   const [isAutoFilled, setIsAutoFilled] = useState(!!currentImageUrl);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -83,7 +83,7 @@ export function ImageUpload({
 
   async function identifyProduct(imageUrl: string) {
     setIdentifying(true);
-    setLensUrl(null);
+    setIdentifyResult(null);
 
     try {
       const res = await fetch("/api/image-search", {
@@ -94,19 +94,21 @@ export function ImageUpload({
 
       if (res.ok) {
         const data = await res.json();
-        if (data.searchUrl) {
-          setLensUrl(data.searchUrl);
-        }
-        if (data.found && onProductIdentified) {
-          onProductIdentified({
-            name: data.name || undefined,
-            price: data.price || undefined,
-            url: data.url || undefined,
-          });
+        if (data.found) {
+          setIdentifyResult(data.name || "Product identified");
+          if (onProductIdentified) {
+            onProductIdentified({
+              name: data.name || undefined,
+              price: data.price || undefined,
+              url: data.url || undefined,
+            });
+          }
+        } else {
+          setIdentifyResult("Couldn't identify this product");
         }
       }
     } catch {
-      // Silently fail
+      setIdentifyResult("Identification failed");
     }
 
     setIdentifying(false);
@@ -115,7 +117,7 @@ export function ImageUpload({
   function handleRemove() {
     setPreview(null);
     setUploadedUrl(null);
-    setLensUrl(null);
+    setIdentifyResult(null);
     setIsAutoFilled(false);
     onImageUploaded("");
     if (fileInputRef.current) {
@@ -156,37 +158,31 @@ export function ImageUpload({
               className="flex items-center gap-1 text-xs text-white hover:text-white/80"
             >
               <RefreshCw className="h-3 w-3" />
-              {isAutoFilled ? "Wrong image? Replace" : "Replace photo"}
+              {isAutoFilled ? "Wrong image? Replace" : "Replace"}
             </button>
 
             <div className="flex gap-2">
-              {uploadedUrl && onProductIdentified && !identifying && (
-                <button
-                  type="button"
-                  onClick={() => identifyProduct(uploadedUrl)}
-                  className="flex items-center gap-1 text-xs text-white hover:text-white/80"
-                >
-                  <ScanSearch className="h-3 w-3" />
-                  Identify
-                </button>
-              )}
               {identifying && (
                 <span className="flex items-center gap-1 text-xs text-white">
                   <Loader2 className="h-3 w-3 animate-spin" />
                   Identifying...
                 </span>
               )}
-              {lensUrl && (
-                <a
-                  href={lensUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {!identifying && identifyResult && (
+                <span className="flex items-center gap-1 text-xs text-green-300">
+                  <Check className="h-3 w-3" />
+                  Identified
+                </span>
+              )}
+              {!identifying && !identifyResult && uploadedUrl && onProductIdentified && (
+                <button
+                  type="button"
+                  onClick={() => identifyProduct(uploadedUrl)}
                   className="flex items-center gap-1 text-xs text-white hover:text-white/80"
-                  onClick={(e) => e.stopPropagation()}
                 >
-                  <ExternalLink className="h-3 w-3" />
-                  Lens
-                </a>
+                  <ScanSearch className="h-3 w-3" />
+                  Identify product
+                </button>
               )}
             </div>
           </div>

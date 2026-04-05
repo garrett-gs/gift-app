@@ -8,100 +8,141 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Image URL is required" }, { status: 400 });
     }
 
-    // Use Google's reverse image search endpoint
-    // This fetches the Google Lens results page and extracts product info
-    const searchUrl = `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(imageUrl)}`;
-
-    const res = await fetch(searchUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
-        Accept: "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
-      },
-      redirect: "follow",
-      signal: AbortSignal.timeout(10000),
-    });
-
-    if (!res.ok) {
-      return NextResponse.json({
-        found: false,
-        searchUrl: `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(imageUrl)}`,
-      });
+    const apiKey = process.env.GOOGLE_VISION_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ found: false, error: "Vision API not configured" });
     }
 
-    const html = await res.text();
+    // Call Google Cloud Vision API with WEB_DETECTION
+    const visionRes = await fetch(
+      `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requests: [
+            {
+              image: { source: { imageUri: imageUrl } },
+              features: [
+                { type: "WEB_DETECTION", maxResults: 10 },
+                { type: "PRODUCT_SEARCH_RESULTS", maxResults: 5 },
+                { type: "LOGO_DETECTION", maxResults: 3 },
+              ],
+            },
+          ],
+        }),
+        signal: AbortSignal.timeout(15000),
+      }
+    );
 
-    // Try to extract product information from the Lens results
-    const productName = extractProductName(html);
-    const productPrice = extractPrice(html);
-    const productUrl = extractProductUrl(html);
+    if (!visionRes.ok) {
+      const errText = await visionRes.text();
+      console.error("Vision API error:", errText);
+      return NextResponse.json({ found: false, error: "Vision API request failed" });
+    }
 
-    if (productName) {
+    const visionData = await visionRes.json();
+    const response = visionData.responses?.[0];
+
+    if (!response) {
+      return NextResponse.json({ found: false });
+    }
+
+    const webDetection = response.webDetection;
+    const logos = response.logoAnnotations;
+
+    // Extract best guess label (product name)
+    let productName = "";
+    if (webDetection?.bestGuessLabels?.length > 0) {
+      productName = webDetection.bestGuessLabels[0].label || "";
+    }
+
+    // Get brand from logo detection
+    let brand = "";
+    if (logos?.length > 0) {
+      brand = logos[0].description || "";
+    }
+
+    // Combine brand + product name
+    if (brand && productName && !productName.toLowerCase().includes(brand.toLowerCase())) {
+      productName = `${brand} ${productName}`;
+    } else if (brand && !productName) {
+      productName = brand;
+    }
+
+    // Find product URL from web entities or pages with matching images
+    let productUrl = "";
+    let productPrice: number | null = null;
+
+    // Check pages with matching images (most likely product pages)
+    if (webDetection?.pagesWithMatchingImages?.length > 0) {
+      for (const page of webDetection.pagesWithMatchingImages) {
+        const pageUrl = page.url || "";
+        // Prefer shopping sites
+        if (
+          pageUrl.includes("amazon.com") ||
+          pageUrl.includes("target.com") ||
+          pageUrl.includes("walmart.com") ||
+          pageUrl.includes("bestbuy.com") ||
+          pageUrl.includes("nordstrom.com") ||
+          pageUrl.includes("nike.com") ||
+          pageUrl.includes("shop") ||
+          pageUrl.includes("product")
+        ) {
+          productUrl = pageUrl;
+          break;
+        }
+      }
+      // If no shopping site found, use the first result
+      if (!productUrl) {
+        productUrl = webDetection.pagesWithMatchingImages[0].url || "";
+      }
+    }
+
+    // If we found a product URL, try to scrape price from it
+    if (productUrl) {
+      try {
+        const scrapeRes = await fetch(
+          `${request.headers.get("origin") || "https://gift-app-lyart.vercel.app"}/api/scrape-url`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: productUrl }),
+          }
+        );
+        if (scrapeRes.ok) {
+          const scrapeData = await scrapeRes.json();
+          if (scrapeData.price) productPrice = scrapeData.price;
+          // Use the scraped title if our Vision name is too generic
+          if (scrapeData.title && (!productName || productName.split(" ").length <= 2)) {
+            productName = scrapeData.title;
+          }
+        }
+      } catch {
+        // Scrape failed, continue without price
+      }
+    }
+
+    // Get a better image if available (full match from web)
+    let betterImage = "";
+    if (webDetection?.fullMatchingImages?.length > 0) {
+      betterImage = webDetection.fullMatchingImages[0].url || "";
+    }
+
+    if (productName || productUrl) {
       return NextResponse.json({
         found: true,
         name: productName,
         price: productPrice,
         url: productUrl,
-        searchUrl: `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(imageUrl)}`,
+        betterImage,
+        brand,
       });
     }
 
-    // If we can't parse the results, return the search URL so the user can look manually
-    return NextResponse.json({
-      found: false,
-      searchUrl: `https://lens.google.com/uploadbyurl?url=${encodeURIComponent(imageUrl)}`,
-    });
-  } catch {
-    return NextResponse.json(
-      { error: "Image search failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ found: false });
+  } catch (e) {
+    console.error("Image search error:", e);
+    return NextResponse.json({ error: "Image search failed" }, { status: 500 });
   }
-}
-
-function extractProductName(html: string): string | null {
-  // Google Lens embeds product titles in various ways
-  // Try data-item-title attribute
-  const titleMatch = html.match(/data-item-title="([^"]+)"/);
-  if (titleMatch) return decodeHtmlEntities(titleMatch[1]);
-
-  // Try aria-label on product cards
-  const ariaMatch = html.match(/aria-label="([^"]{10,100})"/);
-  if (ariaMatch) return decodeHtmlEntities(ariaMatch[1]);
-
-  // Try structured data
-  const ldMatch = html.match(/"name"\s*:\s*"([^"]{5,100})"/);
-  if (ldMatch) return decodeHtmlEntities(ldMatch[1]);
-
-  return null;
-}
-
-function extractPrice(html: string): number | null {
-  // Look for price patterns
-  const priceMatch = html.match(/\$(\d+(?:\.\d{2})?)/);
-  if (priceMatch) return parseFloat(priceMatch[1]);
-
-  const priceDataMatch = html.match(/data-price="(\d+(?:\.\d{2})?)"/);
-  if (priceDataMatch) return parseFloat(priceDataMatch[1]);
-
-  return null;
-}
-
-function extractProductUrl(html: string): string | null {
-  // Look for product links (shopping results)
-  const urlMatch = html.match(/href="(https:\/\/(?:www\.)?(?:amazon|target|walmart|bestbuy|nike|nordstrom)[^"]+)"/i);
-  if (urlMatch) return urlMatch[1];
-
-  return null;
-}
-
-function decodeHtmlEntities(str: string): string {
-  return str
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&#x27;/g, "'");
 }
