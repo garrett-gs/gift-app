@@ -8,6 +8,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Barcode is required" }, { status: 400 });
     }
 
+    function truncate(str: string, max = 900): string {
+      if (!str || str.length <= max) return str;
+      return str.slice(0, max).trimEnd() + "...";
+    }
+
     // Try UPC itemdb
     try {
       const upcRes = await fetch(
@@ -28,7 +33,7 @@ export async function POST(request: Request) {
           return NextResponse.json({
             found: true,
             name: item.title || "",
-            description: item.description || "",
+            description: truncate(item.description || ""),
             price: item.lowest_recorded_price
               ? Number(item.lowest_recorded_price)
               : null,
@@ -59,7 +64,7 @@ export async function POST(request: Request) {
           return NextResponse.json({
             found: true,
             name: p.product_name || p.product_name_en || "",
-            description: p.generic_name || p.categories || "",
+            description: truncate(p.generic_name || p.categories || ""),
             price: null,
             imageUrl:
               p.image_front_url ||
@@ -92,7 +97,7 @@ export async function POST(request: Request) {
           return NextResponse.json({
             found: true,
             name: p.product_name || "",
-            description: p.generic_name || "",
+            description: truncate(p.generic_name || ""),
             price: null,
             imageUrl: p.image_front_url || p.image_url || "",
             url: `https://world.openbeautyfacts.org/product/${barcode}`,

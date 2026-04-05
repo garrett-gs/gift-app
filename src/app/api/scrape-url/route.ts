@@ -57,8 +57,8 @@ export async function POST(request: Request) {
     const availableSizes = extractSizes(html, category);
 
     return NextResponse.json({
-      title: ogTitle || "",
-      description: ogDescription || "",
+      title: (ogTitle || "").slice(0, 200),
+      description: (ogDescription || "").slice(0, 900),
       image: imageUrl,
       price: ogPrice ? parseFloat(ogPrice) : null,
       category,
