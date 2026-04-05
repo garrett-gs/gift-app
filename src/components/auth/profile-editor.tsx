@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { ImageUpload } from "@/components/items/image-upload";
 import { createClient } from "@/lib/supabase/client";
+import { formatPhone } from "@/lib/utils";
 import type { Profile } from "@/lib/types";
 
 interface SpecialOccasion {
@@ -23,7 +24,7 @@ export function ProfileEditor({ profile }: { profile: Profile }) {
 
   const [displayName, setDisplayName] = useState(profile.display_name);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "");
-  const [phone, setPhone] = useState(profile.phone || "");
+  const [phone, setPhone] = useState(profile.phone ? formatPhone(profile.phone) : "");
   const [birthday, setBirthday] = useState(profile.birthday || "");
   const [anniversary, setAnniversary] = useState(profile.anniversary || "");
   const [bio, setBio] = useState(profile.bio || "");
@@ -149,7 +150,7 @@ export function ProfileEditor({ profile }: { profile: Profile }) {
             id="phone"
             type="tel"
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => setPhone(formatPhone(e.target.value))}
             placeholder="(555) 123-4567"
           />
           <p className="text-xs text-muted-foreground">

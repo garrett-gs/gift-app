@@ -5,6 +5,7 @@ import { ProfileEditor } from "@/components/auth/profile-editor";
 import { EditProfileToggle } from "@/components/auth/edit-profile-toggle";
 import { Card, CardContent } from "@/components/ui/card";
 import { OCCASION_TYPES } from "@/lib/constants";
+import { formatPhone } from "@/lib/utils";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -131,7 +132,7 @@ export default async function SettingsPage() {
                 {profile?.phone && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium">
                     <Phone className="h-3 w-3" />
-                    {profile.phone}
+                    {formatPhone(profile.phone)}
                   </span>
                 )}
               </div>
