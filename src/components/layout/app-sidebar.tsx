@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gift, LayoutDashboard, List, Users, Bell, Settings } from "lucide-react";
+import { Gift, LayoutDashboard, List, Users, Bell, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -10,7 +10,7 @@ const navItems = [
   { href: "/registries", label: "My Registries", icon: List },
   { href: "/subscriptions", label: "Subscriptions", icon: Users },
   { href: "/notifications", label: "Notifications", icon: Bell },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings", label: "My Profile", icon: User },
 ];
 
 export function AppSidebar() {

@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
-import { ProfileForm } from "@/components/auth/profile-form";
+import { ProfileEditor } from "@/components/auth/profile-editor";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Settings",
+  title: "My Profile",
 };
 
 export default async function SettingsPage() {
@@ -20,16 +20,13 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="text-2xl font-bold">My Profile</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Manage your account and profile
+        Tell people about yourself so they know what to get you
       </p>
 
       <div className="mt-8">
-        <h2 className="text-lg font-semibold">Profile</h2>
-        <div className="mt-4">
-          {profile && <ProfileForm profile={profile} />}
-        </div>
+        {profile && <ProfileEditor profile={profile} />}
       </div>
     </div>
   );

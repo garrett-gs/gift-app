@@ -18,6 +18,12 @@ export interface Database {
           email: string;
           display_name: string;
           avatar_url: string | null;
+          birthday: string | null;
+          anniversary: string | null;
+          special_occasions: Json | null;
+          bio: string | null;
+          interests: string | null;
+          dislikes: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -26,6 +32,12 @@ export interface Database {
           email: string;
           display_name: string;
           avatar_url?: string | null;
+          birthday?: string | null;
+          anniversary?: string | null;
+          special_occasions?: Json | null;
+          bio?: string | null;
+          interests?: string | null;
+          dislikes?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -34,6 +46,12 @@ export interface Database {
           email?: string;
           display_name?: string;
           avatar_url?: string | null;
+          birthday?: string | null;
+          anniversary?: string | null;
+          special_occasions?: Json | null;
+          bio?: string | null;
+          interests?: string | null;
+          dislikes?: string | null;
           updated_at?: string;
         };
         Relationships: [];
