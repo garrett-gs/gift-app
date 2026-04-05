@@ -1,4 +1,5 @@
 export const OCCASION_TYPES = [
+  { value: "wishlist", label: "Wish List" },
   { value: "birthday", label: "Birthday" },
   { value: "christmas", label: "Christmas" },
   { value: "wedding", label: "Wedding" },
@@ -6,7 +7,9 @@ export const OCCASION_TYPES = [
   { value: "anniversary", label: "Anniversary" },
   { value: "housewarming", label: "Housewarming" },
   { value: "graduation", label: "Graduation" },
-  { value: "other", label: "Other" },
+  { value: "valentines", label: "Valentine's Day" },
+  { value: "mothers_day", label: "Mother's Day" },
+  { value: "fathers_day", label: "Father's Day" },
 ] as const;
 
 export const PRIORITY_LABELS: Record<number, string> = {
