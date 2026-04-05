@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gift, Home, List, Heart, Bell, User, ContactRound } from "lucide-react";
+import { Gift, Home, List, Heart, User, ContactRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -10,7 +10,6 @@ const navItems = [
   { href: "/registries", label: "My Registries", icon: List },
   { href: "/subscriptions", label: "My People", icon: Heart },
   { href: "/find-friends", label: "Find Friends", icon: ContactRound },
-  { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings", label: "My Profile", icon: User },
 ];
 
