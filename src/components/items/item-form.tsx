@@ -36,6 +36,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
   const [error, setError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(!!item);
   const [fetchingUrl, setFetchingUrl] = useState(false);
+  const [detectedSizes, setDetectedSizes] = useState<string[]>([]);
   const [imageUrl, setImageUrl] = useState(item?.image_url || "");
   const [category, setCategory] = useState("general");
   const [selectedSize, setSelectedSize] = useState("");
@@ -81,6 +82,13 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
         if (data.title && (force || !name)) setName(data.title);
         if (data.description && (force || !description)) setDescription(data.description);
         if (data.price && (force || !price)) setPrice(String(data.price));
+        if (data.category) {
+          setCategory(data.category);
+          setShowDetails(true);
+        }
+        if (data.availableSizes && data.availableSizes.length > 0) {
+          setDetectedSizes(data.availableSizes);
+        }
       }
     } catch {
       // Silently fail — user can still fill in manually
@@ -260,35 +268,17 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
             </div>
           </div>
 
-          {/* Clothing Sizes */}
-          {showSizes && (
+          {/* Sizes — auto-detected or manual */}
+          {(showSizes || showShoeSizes || detectedSizes.length > 0) && (
             <div className="space-y-1">
-              <Label>Size</Label>
+              <Label>{showShoeSizes ? "Shoe Size" : "Size"} <span className="text-xs text-muted-foreground">(pick yours)</span></Label>
               <div className="flex flex-wrap gap-2">
-                {CLOTHING_SIZES.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => setSelectedSize(selectedSize === size ? "" : size)}
-                    className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
-                      selectedSize === size
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border hover:bg-muted"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Shoe Sizes */}
-          {showShoeSizes && (
-            <div className="space-y-1">
-              <Label>Shoe Size</Label>
-              <div className="flex flex-wrap gap-2">
-                {SHOE_SIZES.map((size) => (
+                {(detectedSizes.length > 0
+                  ? detectedSizes
+                  : showShoeSizes
+                    ? [...SHOE_SIZES]
+                    : [...CLOTHING_SIZES]
+                ).map((size) => (
                   <button
                     key={size}
                     type="button"
