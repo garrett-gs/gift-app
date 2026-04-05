@@ -1,7 +1,10 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Calendar, Heart, Mail, Phone, Sparkles, ThumbsDown } from "lucide-react";
+import { Calendar, Gift, Heart, Mail, Phone, Sparkles, ThumbsDown } from "lucide-react";
 import { ProfileEditor } from "@/components/auth/profile-editor";
+import { EditProfileToggle } from "@/components/auth/edit-profile-toggle";
 import { Card, CardContent } from "@/components/ui/card";
+import { OCCASION_TYPES } from "@/lib/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -27,18 +30,14 @@ export default async function SettingsPage() {
     .eq("id", user!.id)
     .single();
 
-  // Count registries
-  const { count: registryCount } = await supabase
-    .from("registries")
-    .select("*", { count: "exact", head: true })
-    .eq("owner_id", user!.id);
-
-  // Count followers (people subscribed to my registries)
+  // Get my registries
   const { data: myRegistries } = await supabase
     .from("registries")
-    .select("id")
-    .eq("owner_id", user!.id);
+    .select("id, title, slug, description, occasion, occasion_date")
+    .eq("owner_id", user!.id)
+    .order("created_at", { ascending: false });
 
+  // Count followers (people subscribed to my registries)
   let followerCount = 0;
   if (myRegistries && myRegistries.length > 0) {
     const { count } = await supabase
@@ -60,6 +59,8 @@ export default async function SettingsPage() {
     .join("")
     .toUpperCase()
     .slice(0, 2) || "?";
+
+  const registryCount = myRegistries?.length || 0;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -95,7 +96,7 @@ export default async function SettingsPage() {
               {/* Stats */}
               <div className="mt-3 flex items-center gap-4 text-sm">
                 <div>
-                  <span className="font-bold">{registryCount || 0}</span>{" "}
+                  <span className="font-bold">{registryCount}</span>{" "}
                   <span className="text-muted-foreground">Registries</span>
                 </div>
                 <div>
@@ -163,10 +164,60 @@ export default async function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Edit Form */}
+      {/* My Registries */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold mb-4">Edit Profile</h2>
-        {profile && <ProfileEditor profile={profile} />}
+        <h2 className="text-lg font-semibold">My Registries</h2>
+        <div className="mt-3 space-y-2">
+          {myRegistries && myRegistries.length > 0 ? (
+            myRegistries.map((reg) => {
+              const occasionLabel = OCCASION_TYPES.find(
+                (o) => o.value === reg.occasion
+              )?.label;
+
+              return (
+                <Link
+                  key={reg.id}
+                  href={`/registries/${reg.slug}`}
+                  className="flex items-center gap-4 rounded-xl border bg-card p-4 transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                    <Gift className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">{reg.title}</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      {occasionLabel && <span>{occasionLabel}</span>}
+                      {reg.occasion_date && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(reg.occasion_date).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+                    {reg.description && (
+                      <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+                        {reg.description}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              );
+            })
+          ) : (
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              You haven&apos;t created any registries yet.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Collapsible Edit Profile */}
+      <div className="mt-8">
+        {profile && (
+          <EditProfileToggle>
+            <ProfileEditor profile={profile} />
+          </EditProfileToggle>
+        )}
       </div>
     </div>
   );
