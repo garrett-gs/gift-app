@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Calendar, Gift, Heart } from "lucide-react";
+import { ArrowLeft, Pencil, Calendar, Gift, Heart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -112,6 +112,17 @@ export default async function RegistryDetailPage({ params }: Props) {
 
   return (
     <div>
+      {/* Back to person's profile for non-owners */}
+      {!isOwner && (
+        <Link
+          href={`/people/${registry.owner_id}`}
+          className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to {ownerName}&apos;s Profile
+        </Link>
+      )}
+
       {/* Header */}
       <div>
         <div className="flex items-center gap-3">
