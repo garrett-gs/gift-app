@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gift, Home, List, Users, Bell, User } from "lucide-react";
+import { Gift, Home, List, Users, Bell, User, ContactRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Home", icon: Home },
   { href: "/registries", label: "My Registries", icon: List },
   { href: "/subscriptions", label: "Subscriptions", icon: Users },
+  { href: "/find-friends", label: "Find Friends", icon: ContactRound },
   { href: "/notifications", label: "Notifications", icon: Bell },
   { href: "/settings", label: "My Profile", icon: User },
 ];
