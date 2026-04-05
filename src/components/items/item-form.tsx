@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,13 +34,10 @@ interface ItemFormProps {
 export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDetails, setShowDetails] = useState(!!item);
   const [imageUrl, setImageUrl] = useState(item?.image_url || "");
-  const [category, setCategory] = useState(
-    (item as any)?.category || "general"
-  );
-  const [selectedSize, setSelectedSize] = useState(
-    (item as any)?.size || ""
-  );
+  const [category, setCategory] = useState("general");
+  const [selectedSize, setSelectedSize] = useState("");
 
   // Form field state for barcode auto-fill
   const [name, setName] = useState(item?.name || "");
@@ -64,10 +62,10 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
     if (product.price) setPrice(String(product.price));
     if (product.imageUrl) setImageUrl(product.imageUrl);
     if (product.url) setUrl(product.url);
+    setShowDetails(true);
   }
 
   async function handleSubmit(formData: FormData) {
-    // Append values managed by state
     formData.set("imageUrl", imageUrl);
     formData.set("category", category);
     formData.set("size", selectedSize);
@@ -86,182 +84,204 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
   }
 
   return (
-    <form action={handleSubmit} className="space-y-6">
-      {/* Barcode Scanner */}
-      <BarcodeScanner onProductFound={handleProductFound} />
-
-      {/* Image Upload */}
-      <div className="space-y-2">
-        <Label>Photo</Label>
-        <ImageUpload
-          currentImageUrl={imageUrl || null}
-          onImageUploaded={setImageUrl}
-        />
+    <form action={handleSubmit} className="space-y-4">
+      {/* Quick actions row */}
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <BarcodeScanner onProductFound={handleProductFound} />
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="name">Item name</Label>
+      {/* Photo - always visible */}
+      <ImageUpload
+        currentImageUrl={imageUrl || null}
+        onImageUploaded={setImageUrl}
+      />
+
+      {/* Name - always visible */}
+      <div className="space-y-1">
+        <Label htmlFor="name">What is it?</Label>
         <Input
           id="name"
           name="name"
-          placeholder="e.g., Wireless Headphones"
+          placeholder="e.g., Blue Nike Running Shoes"
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
+          autoFocus
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="description">Description (optional)</Label>
-        <Textarea
-          id="description"
-          name="description"
-          placeholder="Any details about the item..."
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={3}
+      {/* Price - always visible since it's important */}
+      <div className="space-y-1">
+        <Label htmlFor="price">Price (optional)</Label>
+        <Input
+          id="price"
+          name="price"
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder="0.00"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
         />
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="price">Price (optional)</Label>
-          <Input
-            id="price"
-            name="price"
-            type="number"
-            step="0.01"
-            min="0"
-            placeholder="0.00"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="quantityDesired">Quantity</Label>
-          <Input
-            id="quantityDesired"
-            name="quantityDesired"
-            type="number"
-            min="1"
-            max="99"
-            defaultValue={item?.quantity_desired ?? 1}
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="url">Product link (optional)</Label>
+      {/* Link - always visible */}
+      <div className="space-y-1">
+        <Label htmlFor="url">Link (optional)</Label>
         <Input
           id="url"
           name="url"
           type="url"
-          placeholder="https://..."
+          placeholder="Paste product URL..."
           value={url}
           onChange={(e) => setUrl(e.target.value)}
         />
       </div>
 
-      {/* Category */}
-      <div className="space-y-2">
-        <Label>Category</Label>
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            {ITEM_CATEGORIES.map((cat) => (
-              <SelectItem key={cat.value} value={cat.value}>
-                {cat.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {/* Toggle for more details */}
+      <button
+        type="button"
+        onClick={() => setShowDetails(!showDetails)}
+        className="flex w-full items-center justify-center gap-1 rounded-lg py-2 text-sm text-muted-foreground hover:text-foreground"
+      >
+        {showDetails ? (
+          <>Less details <ChevronUp className="h-4 w-4" /></>
+        ) : (
+          <>More details <ChevronDown className="h-4 w-4" /></>
+        )}
+      </button>
 
-      {/* Clothing Sizes */}
-      {showSizes && (
-        <div className="space-y-2">
-          <Label>Size</Label>
-          <div className="flex flex-wrap gap-2">
-            {CLOTHING_SIZES.map((size) => (
-              <button
-                key={size}
-                type="button"
-                onClick={() => setSelectedSize(selectedSize === size ? "" : size)}
-                className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
-                  selectedSize === size
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:bg-muted"
-                }`}
-              >
-                {size}
-              </button>
-            ))}
+      {/* Collapsible details */}
+      {showDetails && (
+        <div className="space-y-4 border-t pt-4">
+          <div className="space-y-1">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              name="description"
+              placeholder="Any details..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={2}
+            />
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label>Category</Label>
+              <Select value={category} onValueChange={(val) => setCategory(val || "general")}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ITEM_CATEGORIES.map((cat) => (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1">
+              <Label>Priority</Label>
+              <Select name="priority" defaultValue={String(item?.priority ?? 3)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Clothing Sizes */}
+          {showSizes && (
+            <div className="space-y-1">
+              <Label>Size</Label>
+              <div className="flex flex-wrap gap-2">
+                {CLOTHING_SIZES.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => setSelectedSize(selectedSize === size ? "" : size)}
+                    className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+                      selectedSize === size
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border hover:bg-muted"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Shoe Sizes */}
+          {showShoeSizes && (
+            <div className="space-y-1">
+              <Label>Shoe Size</Label>
+              <div className="flex flex-wrap gap-2">
+                {SHOE_SIZES.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => setSelectedSize(selectedSize === size ? "" : size)}
+                    className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+                      selectedSize === size
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border hover:bg-muted"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label htmlFor="quantityDesired">Quantity</Label>
+              <Input
+                id="quantityDesired"
+                name="quantityDesired"
+                type="number"
+                min="1"
+                max="99"
+                defaultValue={item?.quantity_desired ?? 1}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              name="notes"
+              placeholder="Color, specific model..."
+              defaultValue={item?.notes || ""}
+              rows={2}
+            />
           </div>
         </div>
       )}
-
-      {/* Shoe Sizes */}
-      {showShoeSizes && (
-        <div className="space-y-2">
-          <Label>Shoe Size</Label>
-          <div className="flex flex-wrap gap-2">
-            {SHOE_SIZES.map((size) => (
-              <button
-                key={size}
-                type="button"
-                onClick={() => setSelectedSize(selectedSize === size ? "" : size)}
-                className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
-                  selectedSize === size
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border hover:bg-muted"
-                }`}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      <div className="space-y-2">
-        <Label htmlFor="priority">Priority</Label>
-        <Select name="priority" defaultValue={String(item?.priority ?? 3)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select priority" />
-          </SelectTrigger>
-          <SelectContent>
-            {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes (optional)</Label>
-        <Textarea
-          id="notes"
-          name="notes"
-          placeholder="Color preference, specific model..."
-          defaultValue={item?.notes || ""}
-          rows={2}
-        />
-      </div>
 
       <input type="hidden" name="currency" value="USD" />
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <div className="flex gap-3">
-        <Button type="submit" disabled={pending}>
-          {pending ? "Saving..." : submitLabel}
-        </Button>
-      </div>
+      <Button type="submit" className="w-full" disabled={pending}>
+        {pending ? "Saving..." : submitLabel}
+      </Button>
     </form>
   );
 }

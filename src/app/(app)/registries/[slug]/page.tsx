@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Calendar, Gift, Share2 } from "lucide-react";
+import { Pencil, Calendar, Gift } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { AddItemDialog } from "@/components/items/add-item-dialog";
 import { ItemGrid } from "@/components/items/item-grid";
+import { QuickShareButton } from "@/components/invitations/quick-share-button";
 import { OCCASION_TYPES } from "@/lib/constants";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
@@ -132,13 +133,7 @@ export default async function RegistryDetailPage({ params }: Props) {
         {isOwner && (
           <div className="flex items-center gap-2">
             <AddItemDialog registryId={registry.id} />
-            <Link
-              href={`/registries/${slug}/share`}
-              className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
-            >
-              <Share2 className="h-4 w-4" />
-              Share
-            </Link>
+            <QuickShareButton registryId={registry.id} registryTitle={registry.title} />
             <Link
               href={`/registries/${slug}/edit`}
               className={cn(buttonVariants({ variant: "outline" }), "gap-2")}
