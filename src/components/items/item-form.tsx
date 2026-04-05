@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -70,7 +70,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
     setShowDetails(true);
   }
 
-  const fetchUrlMetadata = useCallback(async (productUrl: string, force = false) => {
+  async function fetchUrlMetadata(productUrl: string, force = false) {
     if (!productUrl || !productUrl.startsWith("http")) return;
     setFetchingUrl(true);
     try {
@@ -81,10 +81,10 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.image && (force || !imageUrl)) setImageUrl(data.image);
-        if (data.title && (force || !name)) setName(data.title);
-        if (data.description && (force || !description)) setDescription(data.description);
-        if (data.price && (force || !price)) setPrice(String(data.price));
+        if (data.image) setImageUrl(data.image);
+        if (data.title) setName((prev: string) => (force || !prev) ? data.title : prev);
+        if (data.description) setDescription((prev: string) => (force || !prev) ? data.description : prev);
+        if (data.price) setPrice((prev: string) => (force || !prev) ? String(data.price) : prev);
         if (data.category) {
           setCategory(data.category);
           setShowDetails(true);
@@ -97,7 +97,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
       // Silently fail — user can still fill in manually
     }
     setFetchingUrl(false);
-  }, [imageUrl, name, description, price]);
+  }
 
   // Auto-fetch when editing an item that has a URL but no image
   useEffect(() => {
@@ -197,11 +197,12 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
             onPaste={(e) => {
               const pasted = e.clipboardData.getData("text");
               if (pasted.startsWith("http")) {
-                setTimeout(() => fetchUrlMetadata(pasted), 100);
+                // Force overwrite — pasting a new URL means new product
+                setTimeout(() => fetchUrlMetadata(pasted, true), 100);
               }
             }}
             onBlur={() => {
-              if (url.startsWith("http") && !imageUrl && !fetchingUrl) {
+              if (url.startsWith("http") && !fetchingUrl) {
                 fetchUrlMetadata(url);
               }
             }}
