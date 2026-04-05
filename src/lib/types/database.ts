@@ -301,6 +301,10 @@ export interface Database {
         Args: { p_token: string };
         Returns: Json;
       };
+      follow_registry: {
+        Args: { p_registry_id: string };
+        Returns: Json;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
