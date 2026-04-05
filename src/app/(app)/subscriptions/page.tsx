@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Heart, Cake } from "lucide-react";
+import { Heart, Cake, UserPlus, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/shared/empty-state";
 import { NearbyAlert } from "@/components/shared/nearby-alert";
@@ -181,10 +181,21 @@ export default async function MyPeoplePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">My People</h1>
-      <p className="text-sm text-muted-foreground">
-        People you&apos;re shopping for
-      </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">My People</h1>
+          <p className="text-sm text-muted-foreground">
+            People you&apos;re shopping for
+          </p>
+        </div>
+        <Link
+          href="/find-friends"
+          className="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          <UserPlus className="h-4 w-4" />
+          Add People
+        </Link>
+      </div>
 
       <div className="mt-6">
         <NearbyAlert storeItems={storeItems} />
