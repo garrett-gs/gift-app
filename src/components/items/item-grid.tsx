@@ -39,7 +39,7 @@ export function ItemGrid({
             currentUserId={currentUserId}
             purchases={purchases}
             purchaserProfiles={purchaserProfiles}
-            onEdit={isOwner ? setEditingItem : undefined}
+            onTap={isOwner ? setEditingItem : undefined}
           />
         ))}
       </div>
