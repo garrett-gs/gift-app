@@ -14,21 +14,21 @@ export async function subscribe(registryId: string): Promise<ActionResult> {
     return { success: false, error: "Not authenticated" };
   }
 
-  const { data, error } = await supabase
-    .from("subscriptions")
-    .insert({ registry_id: registryId, subscriber_id: user.id })
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc("follow_registry", {
+    p_registry_id: registryId,
+  });
 
   if (error) {
     return { success: false, error: error.message };
   }
 
-  if (!data) {
-    return { success: false, error: "Failed to subscribe" };
+  const result = data as { success: boolean; error?: string };
+  if (!result.success) {
+    return { success: false, error: result.error || "Failed to follow" };
   }
 
   revalidatePath("/subscriptions");
+  revalidatePath(`/registries`);
   return { success: true, data: undefined };
 }
 
