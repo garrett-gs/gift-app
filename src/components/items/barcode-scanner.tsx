@@ -20,17 +20,12 @@ export function BarcodeScanner({ onProductFound }: BarcodeScannerProps) {
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const readerRef = useRef<any>(null);
+  const controlsRef = useRef<any>(null);
 
   const stopScanning = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-    if (readerRef.current) {
-      readerRef.current.reset();
-      readerRef.current = null;
+    if (controlsRef.current) {
+      controlsRef.current.stop();
+      controlsRef.current = null;
     }
     setScanning(false);
   }, []);
@@ -63,7 +58,9 @@ export function BarcodeScanner({ onProductFound }: BarcodeScannerProps) {
         }
       }
 
-      setError(`No product found for barcode ${barcode}. Fill in the name and snap a photo!`);
+      setError(
+        `No product found for barcode ${barcode}. Fill in the name and snap a photo!`
+      );
     } catch {
       setError("Lookup failed. Fill in the details manually.");
     }
@@ -79,34 +76,36 @@ export function BarcodeScanner({ onProductFound }: BarcodeScannerProps) {
     try {
       const { BrowserMultiFormatReader } = await import("@zxing/browser");
       const reader = new BrowserMultiFormatReader();
-      readerRef.current = reader;
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-
-      reader.decodeFromVideoElement(videoRef.current!, (result) => {
-        if (result) {
-          const barcode = result.getText();
-          stopScanning();
-          lookupBarcode(barcode);
+      // Let ZXing handle the camera — more reliable on iOS
+      const controls = await reader.decodeFromVideoDevice(
+        undefined, // use default camera (rear on mobile)
+        videoRef.current!,
+        (result, err) => {
+          if (result) {
+            const barcode = result.getText();
+            controls.stop();
+            controlsRef.current = null;
+            setScanning(false);
+            lookupBarcode(barcode);
+          }
+          // Ignore errors — they fire continuously until a barcode is found
         }
-      });
-    } catch {
-      setError("Camera access denied. Please allow camera access to scan barcodes.");
+      );
+
+      controlsRef.current = controls;
+    } catch (e) {
+      setError(
+        "Camera access denied. Please allow camera access in your browser settings."
+      );
       setScanning(false);
     }
   }
 
   useEffect(() => {
     return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach((t) => t.stop());
+      if (controlsRef.current) {
+        controlsRef.current.stop();
       }
     };
   }, []);
@@ -132,20 +131,21 @@ export function BarcodeScanner({ onProductFound }: BarcodeScannerProps) {
             playsInline
             muted
             className="h-48 w-full object-cover"
+            style={{ transform: "scaleX(1)" }}
           />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="h-24 w-48 rounded border-2 border-white/80" />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="h-20 w-44 rounded border-2 border-white/80 shadow-lg" />
           </div>
           <Button
             type="button"
             variant="destructive"
             size="icon-xs"
-            className="absolute right-2 top-2"
+            className="absolute right-2 top-2 z-10"
             onClick={stopScanning}
           >
             <X className="h-3 w-3" />
           </Button>
-          <p className="bg-black/50 py-1 text-center text-xs text-white">
+          <p className="bg-black/60 py-1.5 text-center text-xs text-white font-medium">
             Point camera at barcode
           </p>
         </div>
