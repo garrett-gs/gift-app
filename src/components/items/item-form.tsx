@@ -157,7 +157,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          autoFocus
+          autoComplete="off"
         />
       </div>
 
@@ -173,6 +173,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
           placeholder="0.00"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
+          autoComplete="off"
         />
       </div>
 
@@ -187,6 +188,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
             placeholder="Paste product URL..."
             value={url}
             onChange={(e) => setUrl(e.target.value)}
+            autoComplete="off"
             onPaste={(e) => {
               const pasted = e.clipboardData.getData("text");
               if (pasted.startsWith("http")) {
