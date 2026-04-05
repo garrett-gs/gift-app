@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -66,7 +66,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
     setShowDetails(true);
   }
 
-  const fetchUrlMetadata = useCallback(async (productUrl: string) => {
+  const fetchUrlMetadata = useCallback(async (productUrl: string, force = false) => {
     if (!productUrl || !productUrl.startsWith("http")) return;
     setFetchingUrl(true);
     try {
@@ -77,16 +77,23 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.image && !imageUrl) setImageUrl(data.image);
-        if (data.title && !name) setName(data.title);
-        if (data.description && !description) setDescription(data.description);
-        if (data.price && !price) setPrice(String(data.price));
+        if (data.image && (force || !imageUrl)) setImageUrl(data.image);
+        if (data.title && (force || !name)) setName(data.title);
+        if (data.description && (force || !description)) setDescription(data.description);
+        if (data.price && (force || !price)) setPrice(String(data.price));
       }
     } catch {
       // Silently fail — user can still fill in manually
     }
     setFetchingUrl(false);
   }, [imageUrl, name, description, price]);
+
+  // Auto-fetch when editing an item that has a URL but no image
+  useEffect(() => {
+    if (item?.url && !item?.image_url && url.startsWith("http")) {
+      fetchUrlMetadata(url);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(formData: FormData) {
     formData.set("imageUrl", imageUrl);
@@ -179,6 +186,15 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
         </div>
         {fetchingUrl && (
           <p className="text-xs text-muted-foreground">Fetching product info...</p>
+        )}
+        {!fetchingUrl && url.startsWith("http") && !imageUrl && (
+          <button
+            type="button"
+            onClick={() => fetchUrlMetadata(url, true)}
+            className="text-xs text-primary hover:underline"
+          >
+            Fetch image and details from link
+          </button>
         )}
       </div>
 
