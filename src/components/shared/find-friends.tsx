@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Search, Users, ContactRound, Loader2, Upload, Check } from "lucide-react";
+import { useState } from "react";
+import { Search, Users, ContactRound, Loader2, Send, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { parseVCF } from "@/lib/parse-vcf";
+import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 
 interface FoundFriend {
@@ -29,8 +29,6 @@ export function FindFriends() {
   const [syncCount, setSyncCount] = useState(0);
   const [emailInput, setEmailInput] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [showManual, setShowManual] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const hasContactPicker =
     typeof window !== "undefined" && "contacts" in navigator;
@@ -63,7 +61,7 @@ export function FindFriends() {
     setSyncing(false);
   }
 
-  // Method 1: Contact Picker API (Android)
+  // Contact Picker API (Android)
   async function handleContactPicker() {
     try {
       // @ts-expect-error Contact Picker API
@@ -85,28 +83,7 @@ export function FindFriends() {
     }
   }
 
-  // Method 2: VCF file import (iPhone workaround)
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const text = await file.text();
-    const parsed = parseVCF(text);
-
-    if (parsed.length === 0) {
-      setError("No contacts found in that file. Make sure it's a .vcf file.");
-      return;
-    }
-
-    const contacts = parsed.map((c) => ({
-      emails: c.emails,
-      phones: c.phones,
-    }));
-
-    await syncContacts(contacts);
-  }
-
-  // Method 3: Manual email/phone entry
+  // Manual email/phone entry
   async function handleManualSearch() {
     const entries = emailInput
       .split(/[,\n]/)
@@ -126,6 +103,28 @@ export function FindFriends() {
     await syncContacts(contacts);
   }
 
+  // Invite friends via native share sheet
+  async function handleInvite() {
+    const shareText = "Join me on GIFT — the easiest way to share wish lists with family and friends! Sign up here:";
+    const shareUrl = window.location.origin + "/signup";
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "Join GIFT",
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch {
+        // User cancelled
+      }
+    } else {
+      // Fallback: copy to clipboard
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      alert("Invite link copied to clipboard!");
+    }
+  }
+
   const initials = (name: string) =>
     name
       .split(" ")
@@ -136,9 +135,8 @@ export function FindFriends() {
 
   return (
     <div className="space-y-6">
-      {/* Primary actions */}
+      {/* Sync contacts — Android gets one-tap, everyone gets manual */}
       <div className="space-y-3">
-        {/* Contact Picker — Android */}
         {hasContactPicker && (
           <Button
             className="w-full gap-2 h-12 text-base"
@@ -150,52 +148,20 @@ export function FindFriends() {
           </Button>
         )}
 
-        {/* VCF Import — works on iPhone */}
-        <Button
-          variant={hasContactPicker ? "outline" : "default"}
-          className="w-full gap-2 h-12 text-base"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={syncing}
-        >
-          <Upload className="h-5 w-5" />
-          {syncing ? "Importing..." : "Import Contacts File (.vcf)"}
-        </Button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".vcf,text/vcard"
-          className="hidden"
-          onChange={handleFileUpload}
-        />
-
-        {!hasContactPicker && (
-          <p className="text-xs text-muted-foreground text-center">
-            On iPhone: Settings &gt; Contacts &gt; Export, then upload the file here
-          </p>
-        )}
-
-        {/* Manual entry toggle */}
-        <button
-          type="button"
-          onClick={() => setShowManual(!showManual)}
-          className="w-full text-center text-xs text-primary hover:underline"
-        >
-          {showManual ? "Hide manual entry" : "Or enter emails/phone numbers manually"}
-        </button>
-      </div>
-
-      {/* Manual entry */}
-      {showManual && (
-        <div className="space-y-3">
-          <Label>Enter emails or phone numbers</Label>
+        <div className="space-y-2">
+          <Label>
+            {hasContactPicker
+              ? "Or search by email / phone number"
+              : "Find friends by email or phone number"}
+          </Label>
           <Textarea
             value={emailInput}
             onChange={(e) => setEmailInput(e.target.value)}
             placeholder={"friend@example.com\n555-123-4567\nanother@example.com"}
-            rows={4}
+            rows={3}
           />
           <Button
-            variant="outline"
+            variant={hasContactPicker ? "outline" : "default"}
             className="w-full gap-2"
             onClick={handleManualSearch}
             disabled={syncing}
@@ -208,7 +174,7 @@ export function FindFriends() {
             {syncing ? "Searching..." : "Find Friends"}
           </Button>
         </div>
-      )}
+      </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
@@ -228,7 +194,8 @@ export function FindFriends() {
           {friends.length > 0 ? (
             <>
               <p className="text-sm font-medium">
-                {friends.length} {friends.length === 1 ? "friend" : "friends"} on GIFT
+                {friends.length}{" "}
+                {friends.length === 1 ? "friend" : "friends"} on GIFT
               </p>
               {friends.map((friend) => (
                 <Card key={friend.id}>
@@ -278,12 +245,28 @@ export function FindFriends() {
               <Users className="mx-auto h-10 w-10 text-muted-foreground" />
               <p className="mt-3 text-sm font-medium">No friends found yet</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                We&apos;ll notify you when someone from your contacts joins GIFT!
+                Invite them to join GIFT!
               </p>
             </div>
           )}
         </div>
       )}
+
+      {/* Invite Friends */}
+      <Separator />
+      <div className="text-center">
+        <p className="text-sm text-muted-foreground mb-3">
+          Don&apos;t see who you&apos;re looking for?
+        </p>
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={handleInvite}
+        >
+          <Send className="h-4 w-4" />
+          Invite Friends to GIFT
+        </Button>
+      </div>
     </div>
   );
 }
