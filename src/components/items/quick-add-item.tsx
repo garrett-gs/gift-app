@@ -60,12 +60,13 @@ export function QuickAddItem({
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.title && !name) setName(data.title);
+        // Always overwrite with scraped data — this is the source of truth
+        if (data.title) setName(data.title);
         if (data.price) setPrice(String(data.price));
         if (data.image) setImageUrl(data.image);
       }
     } catch {
-      // Silently fail
+      // Silently fail — user can still fill in manually
     }
     setFetching(false);
   }
