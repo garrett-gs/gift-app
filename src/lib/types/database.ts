@@ -18,6 +18,7 @@ export interface Database {
           email: string;
           display_name: string;
           avatar_url: string | null;
+          phone: string | null;
           birthday: string | null;
           anniversary: string | null;
           special_occasions: Json | null;
@@ -32,6 +33,7 @@ export interface Database {
           email: string;
           display_name: string;
           avatar_url?: string | null;
+          phone?: string | null;
           birthday?: string | null;
           anniversary?: string | null;
           special_occasions?: Json | null;
@@ -46,6 +48,7 @@ export interface Database {
           email?: string;
           display_name?: string;
           avatar_url?: string | null;
+          phone?: string | null;
           birthday?: string | null;
           anniversary?: string | null;
           special_occasions?: Json | null;
@@ -206,6 +209,33 @@ export interface Database {
         };
         Update: {
           role?: string;
+        };
+        Relationships: [];
+      };
+      user_contacts: {
+        Row: {
+          id: string;
+          user_id: string;
+          contact_email: string | null;
+          contact_phone: string | null;
+          matched_user_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          matched_user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          contact_email?: string | null;
+          contact_phone?: string | null;
+          matched_user_id?: string | null;
+          updated_at?: string;
         };
         Relationships: [];
       };

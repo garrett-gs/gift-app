@@ -23,6 +23,7 @@ export function ProfileEditor({ profile }: { profile: Profile }) {
 
   const [displayName, setDisplayName] = useState(profile.display_name);
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "");
+  const [phone, setPhone] = useState(profile.phone || "");
   const [birthday, setBirthday] = useState(profile.birthday || "");
   const [anniversary, setAnniversary] = useState(profile.anniversary || "");
   const [bio, setBio] = useState(profile.bio || "");
@@ -62,6 +63,7 @@ export function ProfileEditor({ profile }: { profile: Profile }) {
       .update({
         display_name: displayName,
         avatar_url: avatarUrl || null,
+        phone: phone || null,
         birthday: birthday || null,
         anniversary: anniversary || null,
         special_occasions: JSON.parse(JSON.stringify(validOccasions)),
@@ -139,6 +141,20 @@ export function ProfileEditor({ profile }: { profile: Profile }) {
           <Label htmlFor="email">Email</Label>
           <Input id="email" value={profile.email} disabled className="bg-muted" />
           <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone number</Label>
+          <Input
+            id="phone"
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="(555) 123-4567"
+          />
+          <p className="text-xs text-muted-foreground">
+            Used to help friends find you on GIFT
+          </p>
         </div>
       </div>
 

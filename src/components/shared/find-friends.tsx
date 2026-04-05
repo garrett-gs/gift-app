@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Users, ContactRound, Loader2 } from "lucide-react";
+import { useState, useRef } from "react";
+import { Search, Users, ContactRound, Loader2, Upload, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import { parseVCF } from "@/lib/parse-vcf";
 import Link from "next/link";
 
 interface FoundFriend {
@@ -18,76 +18,112 @@ interface FoundFriend {
     id: string;
     title: string;
     slug: string;
-    is_public: boolean;
     isSubscribed: boolean;
   }[];
 }
 
 export function FindFriends() {
   const [friends, setFriends] = useState<FoundFriend[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [synced, setSynced] = useState(false);
+  const [syncCount, setSyncCount] = useState(0);
   const [emailInput, setEmailInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showManual, setShowManual] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Check if Contact Picker API is available
-  const hasContactPicker = typeof window !== "undefined" && "contacts" in navigator;
+  const hasContactPicker =
+    typeof window !== "undefined" && "contacts" in navigator;
 
-  async function searchEmails(emails: string[]) {
-    setSearching(true);
+  async function syncContacts(
+    contacts: { emails: string[]; phones: string[] }[]
+  ) {
+    setSyncing(true);
     setError(null);
 
     try {
-      const res = await fetch("/api/find-friends", {
+      const res = await fetch("/api/sync-contacts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emails }),
+        body: JSON.stringify({ contacts }),
       });
 
       if (res.ok) {
         const data = await res.json();
         setFriends(data.friends);
+        setSyncCount(data.synced);
+        setSynced(true);
       } else {
         setError("Something went wrong. Please try again.");
       }
     } catch {
-      setError("Failed to search. Please try again.");
+      setError("Failed to sync contacts. Please try again.");
     }
 
-    setSearching(false);
-    setSearched(true);
+    setSyncing(false);
   }
 
+  // Method 1: Contact Picker API (Android)
   async function handleContactPicker() {
     try {
-      // @ts-expect-error Contact Picker API not in TypeScript types
-      const contacts = await navigator.contacts.select(["email"], {
+      // @ts-expect-error Contact Picker API
+      const picked = await navigator.contacts.select(["email", "tel"], {
         multiple: true,
       });
-      const emails = contacts
-        .flatMap((c: { email?: string[] }) => c.email || [])
-        .filter(Boolean);
+      const contacts = picked.map(
+        (c: { email?: string[]; tel?: string[] }) => ({
+          emails: c.email || [],
+          phones: c.tel || [],
+        })
+      );
 
-      if (emails.length > 0) {
-        await searchEmails(emails);
+      if (contacts.length > 0) {
+        await syncContacts(contacts);
       }
     } catch {
-      // User cancelled or API unavailable
+      // User cancelled
     }
   }
 
-  async function handleManualSearch() {
-    const emails = emailInput
-      .split(/[,\n]/)
-      .map((e) => e.trim())
-      .filter((e) => e.includes("@"));
+  // Method 2: VCF file import (iPhone workaround)
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-    if (emails.length === 0) {
-      setError("Please enter at least one email address.");
+    const text = await file.text();
+    const parsed = parseVCF(text);
+
+    if (parsed.length === 0) {
+      setError("No contacts found in that file. Make sure it's a .vcf file.");
       return;
     }
 
-    await searchEmails(emails);
+    const contacts = parsed.map((c) => ({
+      emails: c.emails,
+      phones: c.phones,
+    }));
+
+    await syncContacts(contacts);
+  }
+
+  // Method 3: Manual email/phone entry
+  async function handleManualSearch() {
+    const entries = emailInput
+      .split(/[,\n]/)
+      .map((e) => e.trim())
+      .filter(Boolean);
+
+    if (entries.length === 0) {
+      setError("Please enter at least one email or phone number.");
+      return;
+    }
+
+    const contacts = entries.map((entry) => ({
+      emails: entry.includes("@") ? [entry] : [],
+      phones: !entry.includes("@") ? [entry] : [],
+    }));
+
+    await syncContacts(contacts);
   }
 
   const initials = (name: string) =>
@@ -100,60 +136,113 @@ export function FindFriends() {
 
   return (
     <div className="space-y-6">
-      {/* Contact Picker (Android/Chrome) */}
-      {hasContactPicker && (
-        <Button
-          className="w-full gap-2"
-          onClick={handleContactPicker}
-          disabled={searching}
-        >
-          <ContactRound className="h-4 w-4" />
-          {searching ? "Searching..." : "Search My Contacts"}
-        </Button>
-      )}
-
-      {/* Manual email entry (always available) */}
+      {/* Primary actions */}
       <div className="space-y-3">
-        <Label>{hasContactPicker ? "Or enter emails manually" : "Enter email addresses"}</Label>
-        <Textarea
-          value={emailInput}
-          onChange={(e) => setEmailInput(e.target.value)}
-          placeholder={"friend@example.com\nanother@example.com"}
-          rows={3}
-        />
+        {/* Contact Picker — Android */}
+        {hasContactPicker && (
+          <Button
+            className="w-full gap-2 h-12 text-base"
+            onClick={handleContactPicker}
+            disabled={syncing}
+          >
+            <ContactRound className="h-5 w-5" />
+            {syncing ? "Syncing contacts..." : "Sync My Contacts"}
+          </Button>
+        )}
+
+        {/* VCF Import — works on iPhone */}
         <Button
           variant={hasContactPicker ? "outline" : "default"}
-          className="w-full gap-2"
-          onClick={handleManualSearch}
-          disabled={searching}
+          className="w-full gap-2 h-12 text-base"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={syncing}
         >
-          {searching ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Search className="h-4 w-4" />
-          )}
-          {searching ? "Searching..." : "Find Friends"}
+          <Upload className="h-5 w-5" />
+          {syncing ? "Importing..." : "Import Contacts File (.vcf)"}
         </Button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".vcf,text/vcard"
+          className="hidden"
+          onChange={handleFileUpload}
+        />
+
+        {!hasContactPicker && (
+          <p className="text-xs text-muted-foreground text-center">
+            On iPhone: Settings &gt; Contacts &gt; Export, then upload the file here
+          </p>
+        )}
+
+        {/* Manual entry toggle */}
+        <button
+          type="button"
+          onClick={() => setShowManual(!showManual)}
+          className="w-full text-center text-xs text-primary hover:underline"
+        >
+          {showManual ? "Hide manual entry" : "Or enter emails/phone numbers manually"}
+        </button>
       </div>
+
+      {/* Manual entry */}
+      {showManual && (
+        <div className="space-y-3">
+          <Label>Enter emails or phone numbers</Label>
+          <Textarea
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            placeholder={"friend@example.com\n555-123-4567\nanother@example.com"}
+            rows={4}
+          />
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={handleManualSearch}
+            disabled={syncing}
+          >
+            {syncing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
+            {syncing ? "Searching..." : "Find Friends"}
+          </Button>
+        </div>
+      )}
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
+      {/* Sync status */}
+      {synced && (
+        <div className="flex items-center gap-2 rounded-lg bg-muted px-4 py-2">
+          <Check className="h-4 w-4 text-green-600" />
+          <p className="text-sm text-muted-foreground">
+            {syncCount} contacts synced. We&apos;ll notify you when new contacts join GIFT.
+          </p>
+        </div>
+      )}
+
       {/* Results */}
-      {searched && (
+      {synced && (
         <div className="space-y-4">
           {friends.length > 0 ? (
             <>
               <p className="text-sm font-medium">
-                Found {friends.length} {friends.length === 1 ? "friend" : "friends"} on GIFT
+                {friends.length} {friends.length === 1 ? "friend" : "friends"} on GIFT
               </p>
               {friends.map((friend) => (
                 <Card key={friend.id}>
                   <CardContent className="flex items-center gap-4 p-4">
                     <Avatar className="h-12 w-12">
                       {friend.avatarUrl && (
-                        <AvatarImage src={friend.avatarUrl} alt={friend.displayName} />
+                        <AvatarImage
+                          src={friend.avatarUrl}
+                          alt={friend.displayName}
+                        />
                       )}
-                      <AvatarFallback>{initials(friend.displayName)}</AvatarFallback>
+                      <AvatarFallback>
+                        {initials(friend.displayName)}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold">{friend.displayName}</p>
@@ -167,7 +256,9 @@ export function FindFriends() {
                             >
                               {reg.title}
                               {reg.isSubscribed && (
-                                <span className="ml-1 text-muted-foreground">(following)</span>
+                                <span className="ml-1 text-muted-foreground">
+                                  (following)
+                                </span>
                               )}
                             </Link>
                           ))}
@@ -185,9 +276,9 @@ export function FindFriends() {
           ) : (
             <div className="rounded-lg border border-dashed px-6 py-12 text-center">
               <Users className="mx-auto h-10 w-10 text-muted-foreground" />
-              <p className="mt-3 text-sm font-medium">No friends found</p>
+              <p className="mt-3 text-sm font-medium">No friends found yet</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                None of those emails are on GIFT yet. Invite them!
+                We&apos;ll notify you when someone from your contacts joins GIFT!
               </p>
             </div>
           )}
