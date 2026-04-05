@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { Plus, List, Gift as GiftIcon, Pencil } from "lucide-react";
+import { Plus, Gift } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { RegistryCard } from "@/components/registry/registry-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
@@ -19,146 +17,248 @@ export default async function DashboardPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user!.id)
-    .single();
-
+  // My registries for carousel
   const { data: registries } = await supabase
     .from("registries")
-    .select("*")
+    .select("id, title, slug, cover_image_url")
     .eq("owner_id", user!.id)
-    .order("created_at", { ascending: false })
-    .limit(6);
+    .order("created_at", { ascending: false });
 
-  const initials = (profile?.display_name || "")
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
+  // Get registries I'm subscribed to
+  const { data: mySubscriptions } = await supabase
+    .from("subscriptions")
+    .select("registry_id")
+    .eq("subscriber_id", user!.id);
 
-  const birthdayDisplay = profile?.birthday
-    ? new Date(profile.birthday + "T00:00:00").toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-      })
-    : null;
+  const subscribedRegistryIds = (mySubscriptions || []).map(
+    (s) => s.registry_id
+  );
+
+  // Get recent items from subscribed registries
+  interface FeedItem {
+    id: string;
+    name: string;
+    price: number | null;
+    image_url: string | null;
+    created_at: string;
+    registry_id: string;
+  }
+
+  interface FeedRegistry {
+    id: string;
+    title: string;
+    slug: string;
+    owner_id: string;
+  }
+
+  interface FeedProfile {
+    id: string;
+    display_name: string;
+    avatar_url: string | null;
+  }
+
+  let feedItems: FeedItem[] = [];
+  let feedRegistries: FeedRegistry[] = [];
+  let feedProfiles: FeedProfile[] = [];
+
+  if (subscribedRegistryIds.length > 0) {
+    const { data: recentItems } = await supabase
+      .from("registry_items")
+      .select("id, name, price, image_url, created_at, registry_id")
+      .in("registry_id", subscribedRegistryIds)
+      .eq("is_archived", false)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    feedItems = recentItems || [];
+
+    if (feedItems.length > 0) {
+      const regIds = [...new Set(feedItems.map((i) => i.registry_id))];
+      const { data: regs } = await supabase
+        .from("registries")
+        .select("id, title, slug, owner_id")
+        .in("id", regIds);
+      feedRegistries = regs || [];
+
+      const ownerIds = [...new Set(feedRegistries.map((r) => r.owner_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_url")
+        .in("id", ownerIds);
+      feedProfiles = profiles || [];
+    }
+  }
+
+  // Build lookup maps
+  const regMap = new Map(feedRegistries.map((r) => [r.id, r]));
+  const profileMap = new Map(feedProfiles.map((p) => [p.id, p]));
+
+  // Group feed items by date
+  function timeAgo(dateStr: string) {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
 
   return (
     <div className="mx-auto max-w-3xl">
-      {/* Profile Card */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-6">
-          <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left sm:gap-5">
-            <Link href="/settings" className="shrink-0">
-              <Avatar className="h-32 w-32 border-4 shadow-md sm:h-36 sm:w-36">
-                {profile?.avatar_url && (
-                  <AvatarImage src={profile.avatar_url} alt={profile.display_name} />
-                )}
-                <AvatarFallback className="text-4xl">{initials}</AvatarFallback>
-              </Avatar>
-            </Link>
-            <div className="mt-4 min-w-0 flex-1 sm:mt-0">
-              <div className="flex items-center justify-center gap-2 sm:justify-start">
-                <h1 className="text-xl font-bold">{profile?.display_name}</h1>
-                <Link
-                  href="/settings"
-                  className={cn(buttonVariants({ variant: "ghost", size: "icon-xs" }))}
-                  title="Edit profile"
-                >
-                  <Pencil className="h-3 w-3" />
-                </Link>
-              </div>
-
-              {profile?.bio && (
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {profile.bio}
-                </p>
-              )}
-
-              <div className="mt-3 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground sm:justify-start">
-                {birthdayDisplay && (
-                  <span className="flex items-center gap-1">
-                    <GiftIcon className="h-3 w-3" />
-                    Birthday: {birthdayDisplay}
-                  </span>
-                )}
-                {profile?.interests && (
-                  <span className="truncate max-w-[250px]">
-                    Likes: {profile.interests}
-                  </span>
-                )}
-              </div>
-
-              {profile?.dislikes && (
-                <p className="mt-1 text-xs text-muted-foreground truncate max-w-[300px]">
-                  Dislikes: {profile.dislikes}
-                </p>
-              )}
-
-              {!profile?.bio && !profile?.birthday && !profile?.interests && (
-                <Link
-                  href="/settings"
-                  className="mt-2 inline-block text-xs text-primary hover:underline"
-                >
-                  Complete your profile so people know what to get you
-                </Link>
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Registries */}
-      <div className="mt-8">
-        <div className="flex items-center justify-between">
+      {/* Registry Carousel */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-semibold">My Registries</h2>
           <Link
-            href="/registries/new"
-            className={cn(buttonVariants({ size: "sm" }), "gap-2")}
+            href="/registries"
+            className="text-xs text-muted-foreground hover:text-foreground"
           >
-            <Plus className="h-3 w-3" />
-            New Registry
+            View all
           </Link>
         </div>
-        <div className="mt-4">
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
           {registries && registries.length > 0 ? (
             <>
-              <div className="grid gap-4 sm:grid-cols-2">
-                {registries.map((registry) => (
-                  <RegistryCard key={registry.id} registry={registry} />
-                ))}
-              </div>
-              {registries.length >= 6 && (
-                <div className="mt-4 text-center">
-                  <Link
-                    href="/registries"
-                    className="text-sm text-primary hover:underline"
-                  >
-                    View all registries
-                  </Link>
+              {registries.map((reg) => (
+                <Link
+                  key={reg.id}
+                  href={`/registries/${reg.slug}`}
+                  className="shrink-0"
+                >
+                  <div className="w-24 space-y-1.5">
+                    {reg.cover_image_url ? (
+                      <img
+                        src={reg.cover_image_url}
+                        alt={reg.title}
+                        className="h-24 w-24 rounded-xl object-cover border shadow-sm"
+                      />
+                    ) : (
+                      <div className="flex h-24 w-24 items-center justify-center rounded-xl border bg-muted shadow-sm">
+                        <Gift className="h-8 w-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <p className="text-[11px] font-medium text-center line-clamp-2 leading-tight">
+                      {reg.title}
+                    </p>
+                  </div>
+                </Link>
+              ))}
+              <Link href="/registries/new" className="shrink-0">
+                <div className="w-24 space-y-1.5">
+                  <div className="flex h-24 w-24 items-center justify-center rounded-xl border-2 border-dashed bg-muted/50">
+                    <Plus className="h-8 w-8 text-muted-foreground" />
+                  </div>
+                  <p className="text-[11px] font-medium text-center text-muted-foreground">
+                    New Registry
+                  </p>
                 </div>
-              )}
+              </Link>
             </>
           ) : (
-            <EmptyState
-              icon={<List className="h-12 w-12" />}
-              title="No registries yet"
-              description="Create your first gift registry to get started."
-              action={
-                <Link
-                  href="/registries/new"
-                  className={cn(buttonVariants(), "gap-2")}
-                >
-                  <Plus className="h-4 w-4" />
-                  Create Registry
-                </Link>
-              }
-            />
+            <Link href="/registries/new" className="shrink-0">
+              <div className="w-24 space-y-1.5">
+                <div className="flex h-24 w-24 items-center justify-center rounded-xl border-2 border-dashed bg-muted/50">
+                  <Plus className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-[11px] font-medium text-center text-muted-foreground">
+                  Create First
+                </p>
+              </div>
+            </Link>
           )}
         </div>
+      </div>
+
+      {/* Activity Feed */}
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold mb-4">What&apos;s New</h2>
+
+        {feedItems.length > 0 ? (
+          <div className="space-y-3">
+            {feedItems.map((item) => {
+              const reg = regMap.get(item.registry_id);
+              const owner = reg ? profileMap.get(reg.owner_id) : null;
+              const ownerInitials = (owner?.display_name || "?")
+                .split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+                .slice(0, 2);
+
+              return (
+                <Link
+                  key={item.id}
+                  href={`/registries/${reg?.slug || ""}`}
+                  className="flex gap-3 rounded-xl border bg-card p-3 transition-colors hover:bg-muted/50"
+                >
+                  {/* Owner avatar */}
+                  <Avatar className="h-10 w-10 shrink-0">
+                    {owner?.avatar_url && (
+                      <AvatarImage src={owner.avatar_url} alt={owner.display_name} />
+                    )}
+                    <AvatarFallback className="text-xs">{ownerInitials}</AvatarFallback>
+                  </Avatar>
+
+                  {/* Text content */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm">
+                      <span className="font-semibold">{owner?.display_name || "Someone"}</span>
+                      {" added "}
+                      <span className="font-semibold">{item.name}</span>
+                      {" to "}
+                      <span className="text-muted-foreground">{reg?.title || "a registry"}</span>
+                    </p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {item.price != null && (
+                        <span className="text-xs text-muted-foreground">
+                          ${Number(item.price).toFixed(2)}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {timeAgo(item.created_at)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Item image */}
+                  {item.image_url && (
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="h-14 w-14 rounded-lg object-cover shrink-0"
+                    />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            icon={<Gift className="h-12 w-12" />}
+            title="No activity yet"
+            description={
+              subscribedRegistryIds.length > 0
+                ? "When people you follow add items to their registries, they'll show up here."
+                : "Follow people to see what they're adding to their wish lists."
+            }
+            action={
+              subscribedRegistryIds.length === 0 ? (
+                <Link
+                  href="/find-friends"
+                  className={cn(buttonVariants(), "gap-2")}
+                >
+                  Find People
+                </Link>
+              ) : undefined
+            }
+          />
+        )}
       </div>
     </div>
   );

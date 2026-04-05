@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Cake, Calendar, Gift, Heart, Mail, Phone, Sparkles, ThumbsDown } from "lucide-react";
+import { Cake, Calendar, Heart, Mail, Phone, Plus, Sparkles, ThumbsDown } from "lucide-react";
 import { ProfileEditor } from "@/components/auth/profile-editor";
 import { EditProfileToggle } from "@/components/auth/edit-profile-toggle";
+import { RegistryCard } from "@/components/registry/registry-card";
 import { Card, CardContent } from "@/components/ui/card";
-import { OCCASION_TYPES } from "@/lib/constants";
-import { formatPhone } from "@/lib/utils";
+import { buttonVariants } from "@/lib/button-variants";
+import { cn, formatPhone } from "@/lib/utils";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -34,7 +35,7 @@ export default async function SettingsPage() {
   // Get my registries
   const { data: myRegistries } = await supabase
     .from("registries")
-    .select("id, title, slug, description, occasion, occasion_date")
+    .select("*")
     .eq("owner_id", user!.id)
     .order("created_at", { ascending: false });
 
@@ -167,43 +168,23 @@ export default async function SettingsPage() {
 
       {/* My Registries */}
       <div className="mt-8">
-        <h2 className="text-lg font-semibold">My Registries</h2>
-        <div className="mt-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">My Registries</h2>
+          <Link
+            href="/registries/new"
+            className={cn(buttonVariants({ size: "sm" }), "gap-2")}
+          >
+            <Plus className="h-3 w-3" />
+            New Registry
+          </Link>
+        </div>
+        <div className="mt-3">
           {myRegistries && myRegistries.length > 0 ? (
-            myRegistries.map((reg) => {
-              const occasionLabel = OCCASION_TYPES.find(
-                (o) => o.value === reg.occasion
-              )?.label;
-
-              return (
-                <Link
-                  key={reg.id}
-                  href={`/registries/${reg.slug}`}
-                  className="flex items-center gap-4 rounded-xl border bg-card p-4 transition-colors hover:bg-muted/50"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <Gift className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium">{reg.title}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      {occasionLabel && <span>{occasionLabel}</span>}
-                      {reg.occasion_date && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          {new Date(reg.occasion_date).toLocaleDateString()}
-                        </span>
-                      )}
-                    </div>
-                    {reg.description && (
-                      <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
-                        {reg.description}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              );
-            })
+            <div className="grid gap-4 sm:grid-cols-2">
+              {myRegistries.map((reg) => (
+                <RegistryCard key={reg.id} registry={reg} />
+              ))}
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground py-8 text-center">
               You haven&apos;t created any registries yet.
