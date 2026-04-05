@@ -53,11 +53,11 @@ export default async function DashboardPage() {
         <CardContent className="p-6">
           <div className="flex flex-col items-center text-center sm:flex-row sm:items-start sm:text-left sm:gap-5">
             <Link href="/settings" className="shrink-0">
-              <Avatar className="h-24 w-24 border-2">
+              <Avatar className="h-32 w-32 border-4 shadow-md sm:h-36 sm:w-36">
                 {profile?.avatar_url && (
                   <AvatarImage src={profile.avatar_url} alt={profile.display_name} />
                 )}
-                <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
+                <AvatarFallback className="text-4xl">{initials}</AvatarFallback>
               </Avatar>
             </Link>
             <div className="mt-4 min-w-0 flex-1 sm:mt-0">
