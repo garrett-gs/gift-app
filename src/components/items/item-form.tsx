@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +35,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(!!item);
+  const [fetchingUrl, setFetchingUrl] = useState(false);
   const [imageUrl, setImageUrl] = useState(item?.image_url || "");
   const [category, setCategory] = useState("general");
   const [selectedSize, setSelectedSize] = useState("");
@@ -64,6 +65,28 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
     if (product.url) setUrl(product.url);
     setShowDetails(true);
   }
+
+  const fetchUrlMetadata = useCallback(async (productUrl: string) => {
+    if (!productUrl || !productUrl.startsWith("http")) return;
+    setFetchingUrl(true);
+    try {
+      const res = await fetch("/api/scrape-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: productUrl }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.image && !imageUrl) setImageUrl(data.image);
+        if (data.title && !name) setName(data.title);
+        if (data.description && !description) setDescription(data.description);
+        if (data.price && !price) setPrice(String(data.price));
+      }
+    } catch {
+      // Silently fail — user can still fill in manually
+    }
+    setFetchingUrl(false);
+  }, [imageUrl, name, description, price]);
 
   async function handleSubmit(formData: FormData) {
     formData.set("imageUrl", imageUrl);
@@ -127,17 +150,36 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
         />
       </div>
 
-      {/* Link - always visible */}
+      {/* Link - always visible, auto-fetches product info */}
       <div className="space-y-1">
         <Label htmlFor="url">Link (optional)</Label>
-        <Input
-          id="url"
-          name="url"
-          type="url"
-          placeholder="Paste product URL..."
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-        />
+        <div className="relative">
+          <Input
+            id="url"
+            name="url"
+            type="url"
+            placeholder="Paste product URL..."
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            onPaste={(e) => {
+              const pasted = e.clipboardData.getData("text");
+              if (pasted.startsWith("http")) {
+                setTimeout(() => fetchUrlMetadata(pasted), 100);
+              }
+            }}
+            onBlur={() => {
+              if (url.startsWith("http") && !imageUrl && !fetchingUrl) {
+                fetchUrlMetadata(url);
+              }
+            }}
+          />
+          {fetchingUrl && (
+            <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
+          )}
+        </div>
+        {fetchingUrl && (
+          <p className="text-xs text-muted-foreground">Fetching product info...</p>
+        )}
       </div>
 
       {/* Toggle for more details */}
