@@ -3,24 +3,24 @@ import { Gift, Users, ShoppingBag, Bell } from "lucide-react";
 
 export default function HomePage() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col" style={{ background: "transparent" }}>
       {/* Header */}
-      <header className="border-b">
+      <header className="border-b border-white/20">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 text-white drop-shadow-md">
             <Gift className="h-6 w-6" />
             <span className="text-xl font-bold">GIFT</span>
           </div>
           <div className="flex items-center gap-3">
             <Link
               href="/login"
-              className="inline-flex h-8 items-center justify-center rounded-lg px-2.5 text-sm font-medium hover:bg-muted hover:text-foreground"
+              className="inline-flex h-9 items-center justify-center rounded-lg px-3 text-sm font-medium text-white hover:bg-white/10"
             >
               Log in
             </Link>
             <Link
               href="/signup"
-              className="inline-flex h-8 items-center justify-center rounded-lg bg-primary px-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/80"
+              className="inline-flex h-9 items-center justify-center rounded-lg bg-white px-4 text-sm font-semibold text-neutral-900 shadow-md hover:bg-white/90"
             >
               Sign up
             </Link>
@@ -29,27 +29,27 @@ export default function HomePage() {
       </header>
 
       {/* Hero */}
-      <main className="flex-1">
+      <main className="flex-1" style={{ background: "transparent" }}>
         <section className="mx-auto max-w-6xl px-4 py-24 text-center">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
+          <h1 className="text-4xl font-bold tracking-tight text-white drop-shadow-lg sm:text-6xl">
             The gift registry
             <br />
-            <span className="text-muted-foreground">your family deserves</span>
+            <span className="text-neutral-900/70">your family deserves</span>
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-white/80 drop-shadow">
             Create wish lists for any occasion. Share with family and friends.
             Never get duplicate gifts again.
           </p>
           <div className="mt-10 flex items-center justify-center gap-4">
             <Link
               href="/signup"
-              className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/80"
+              className="inline-flex h-11 items-center justify-center rounded-lg bg-neutral-900 px-6 text-sm font-semibold text-white shadow-lg hover:bg-neutral-800"
             >
               Get started free
             </Link>
             <Link
               href="/login"
-              className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-background px-2.5 text-sm font-medium hover:bg-muted hover:text-foreground"
+              className="inline-flex h-11 items-center justify-center rounded-lg border-2 border-white bg-white/90 px-6 text-sm font-semibold text-neutral-900 shadow-md hover:bg-white"
             >
               I have an account
             </Link>
@@ -57,7 +57,7 @@ export default function HomePage() {
         </section>
 
         {/* Features */}
-        <section className="border-t bg-muted/50 py-24">
+        <section className="bg-white py-24">
           <div className="mx-auto max-w-6xl px-4">
             <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-4">
               <Feature
@@ -67,8 +67,8 @@ export default function HomePage() {
               />
               <Feature
                 icon={<Users className="h-8 w-8" />}
-                title="Share & Subscribe"
-                description="Invite family and friends to view your lists. Subscribe to theirs."
+                title="Share & Follow"
+                description="Invite family and friends to view your lists. Follow theirs."
               />
               <Feature
                 icon={<ShoppingBag className="h-8 w-8" />}
@@ -86,8 +86,8 @@ export default function HomePage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t py-8">
-        <div className="mx-auto max-w-6xl px-4 text-center text-sm text-muted-foreground">
+      <footer className="bg-white border-t py-8">
+        <div className="mx-auto max-w-6xl px-4 text-center text-sm text-neutral-500">
           GIFT — Your universal gift registry
         </div>
       </footer>
@@ -106,11 +106,11 @@ function Feature({
 }) {
   return (
     <div className="text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-primary/10">
+      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-lg bg-amber-50 text-amber-700">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      <h3 className="text-lg font-semibold text-neutral-900">{title}</h3>
+      <p className="mt-2 text-sm text-neutral-500">{description}</p>
     </div>
   );
 }
