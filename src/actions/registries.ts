@@ -40,6 +40,8 @@ export async function createRegistry(formData: FormData): Promise<ActionResult<s
 
   const slug = generateSlug(parsed.data.title);
 
+  const coverImageUrl = formData.get("coverImageUrl") as string || null;
+
   const { data, error } = await supabase.from("registries").insert({
     owner_id: user.id,
     title: parsed.data.title,
@@ -47,6 +49,7 @@ export async function createRegistry(formData: FormData): Promise<ActionResult<s
     occasion: parsed.data.occasion || null,
     occasion_date: parsed.data.occasionDate || null,
     is_public: parsed.data.isPublic || false,
+    cover_image_url: coverImageUrl,
     slug,
   }).select().single();
 
@@ -81,6 +84,7 @@ export async function updateRegistry(
   }
 
   const supabase = await createClient();
+  const coverImageUrl = formData.get("coverImageUrl") as string || null;
 
   const { error } = await supabase
     .from("registries")
@@ -90,6 +94,7 @@ export async function updateRegistry(
       occasion: parsed.data.occasion || null,
       occasion_date: parsed.data.occasionDate || null,
       is_public: parsed.data.isPublic || false,
+      cover_image_url: coverImageUrl,
     })
     .eq("id", registryId);
 

@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ImageUpload } from "@/components/items/image-upload";
 import { OCCASION_TYPES } from "@/lib/constants";
 import type { Registry } from "@/lib/types";
 
@@ -24,8 +25,10 @@ interface RegistryFormProps {
 export function RegistryForm({ registry, action, submitLabel }: RegistryFormProps) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [coverImageUrl, setCoverImageUrl] = useState(registry?.cover_image_url || "");
 
   async function handleSubmit(formData: FormData) {
+    formData.set("coverImageUrl", coverImageUrl);
     setPending(true);
     setError(null);
     try {
@@ -41,28 +44,7 @@ export function RegistryForm({ registry, action, submitLabel }: RegistryFormProp
 
   return (
     <form action={handleSubmit} className="space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="title">Registry name</Label>
-        <Input
-          id="title"
-          name="title"
-          placeholder="e.g., My Birthday 2026"
-          defaultValue={registry?.title}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="description">Description (optional)</Label>
-        <Textarea
-          id="description"
-          name="description"
-          placeholder="What's this registry for?"
-          defaultValue={registry?.description || ""}
-          rows={3}
-        />
-      </div>
-
+      {/* Occasion first */}
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="occasion">Occasion (optional)</Label>
@@ -91,6 +73,39 @@ export function RegistryForm({ registry, action, submitLabel }: RegistryFormProp
         </div>
       </div>
 
+      {/* Registry name */}
+      <div className="space-y-2">
+        <Label htmlFor="title">Registry name</Label>
+        <Input
+          id="title"
+          name="title"
+          placeholder="e.g., My Birthday 2026"
+          defaultValue={registry?.title}
+          required
+        />
+      </div>
+
+      {/* Cover photo */}
+      <div className="space-y-2">
+        <Label>Cover photo (optional)</Label>
+        <ImageUpload
+          currentImageUrl={coverImageUrl || null}
+          onImageUploaded={setCoverImageUrl}
+        />
+      </div>
+
+      {/* Description */}
+      <div className="space-y-2">
+        <Label htmlFor="description">Description (optional)</Label>
+        <Textarea
+          id="description"
+          name="description"
+          placeholder="What's this registry for?"
+          defaultValue={registry?.description || ""}
+          rows={3}
+        />
+      </div>
+
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
@@ -106,7 +121,7 @@ export function RegistryForm({ registry, action, submitLabel }: RegistryFormProp
 
       {error && <p className="text-sm text-destructive">{error}</p>}
 
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" className="w-full" disabled={pending}>
         {pending ? "Saving..." : submitLabel}
       </Button>
     </form>

@@ -12,7 +12,14 @@ export function RegistryCard({ registry }: { registry: Registry }) {
 
   return (
     <Link href={`/registries/${registry.slug}`}>
-      <Card className="transition-colors hover:bg-muted/50">
+      <Card className="overflow-hidden transition-colors hover:bg-muted/50">
+        {registry.cover_image_url && (
+          <img
+            src={registry.cover_image_url}
+            alt={registry.title}
+            className="h-32 w-full object-cover"
+          />
+        )}
         <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
           <CardTitle className="text-base font-semibold">
             {registry.title}
