@@ -48,7 +48,7 @@ export function RegistryForm({ registry, action, submitLabel }: RegistryFormProp
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="occasion">Occasion (optional)</Label>
-          <Select name="occasion" defaultValue={registry?.occasion || ""}>
+          <Select name="occasion" defaultValue={registry?.occasion || "wishlist"}>
             <SelectTrigger>
               <SelectValue placeholder="Select occasion" />
             </SelectTrigger>
