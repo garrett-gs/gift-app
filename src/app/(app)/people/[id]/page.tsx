@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { FollowAllButton } from "@/components/invitations/follow-all-button";
 import { OCCASION_TYPES } from "@/lib/constants";
 import type { Metadata } from "next";
 
@@ -58,24 +59,30 @@ export default async function PersonProfilePage({ params }: Props) {
     notFound();
   }
 
-  // Get registries the current user is subscribed to from this person
-  const { data: subscriptions } = await supabase
+  // Get ALL of this person's registries
+  const { data: allRegistries } = await supabase
+    .from("registries")
+    .select("id, title, slug, description, occasion, occasion_date, owner_id")
+    .eq("owner_id", id)
+    .order("created_at", { ascending: false });
+
+  // Get which ones the current user is subscribed to
+  const { data: mySubscriptions } = await supabase
     .from("subscriptions")
-    .select("*, registries(*)")
+    .select("registry_id")
     .eq("subscriber_id", user!.id);
 
-  // Filter to only this person's registries
-  const theirRegistries = (subscriptions || [])
-    .map((s) => s.registries as unknown as {
-      id: string;
-      title: string;
-      slug: string;
-      description: string | null;
-      occasion: string | null;
-      occasion_date: string | null;
-      owner_id: string;
-    })
-    .filter((r) => r && r.owner_id === id);
+  const subscribedIds = new Set(
+    (mySubscriptions || []).map((s) => s.registry_id)
+  );
+
+  const theirRegistries = (allRegistries || []).map((r) => ({
+    ...r,
+    isFollowing: subscribedIds.has(r.id),
+  }));
+
+  const isFollowingAny = theirRegistries.some((r) => r.isFollowing);
+  const allFollowed = theirRegistries.length > 0 && theirRegistries.every((r) => r.isFollowing);
 
   const initials = (profile.display_name || "")
     .split(" ")
@@ -117,7 +124,15 @@ export default async function PersonProfilePage({ params }: Props) {
               <AvatarFallback className="text-4xl">{initials}</AvatarFallback>
             </Avatar>
             <div className="mt-4 min-w-0 flex-1 sm:mt-0">
-              <h1 className="text-xl font-bold">{profile.display_name}</h1>
+              <div className="flex items-center justify-between gap-3">
+                <h1 className="text-xl font-bold">{profile.display_name}</h1>
+                {theirRegistries.length > 0 && (
+                  <FollowAllButton
+                    registryIds={theirRegistries.filter((r) => !r.isFollowing).map((r) => r.id)}
+                    alreadyFollowingAll={allFollowed}
+                  />
+                )}
+              </div>
 
               {profile.bio && (
                 <p className="mt-2 text-sm text-muted-foreground">
@@ -204,7 +219,9 @@ export default async function PersonProfilePage({ params }: Props) {
                       </p>
                     )}
                   </div>
-                  <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  {reg.isFollowing && (
+                    <span className="text-xs text-green-600 font-medium shrink-0">Following</span>
+                  )}
                 </Link>
               );
             })
