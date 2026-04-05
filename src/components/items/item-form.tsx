@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { ImageUpload } from "@/components/items/image-upload";
 import { BarcodeScanner } from "@/components/items/barcode-scanner";
+import { StorePicker } from "@/components/items/store-picker";
 import {
   PRIORITY_LABELS,
   ITEM_CATEGORIES,
@@ -344,17 +345,14 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
           </div>
 
           {/* Store location */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             <Label>Seen in a store? (optional)</Label>
-            <Input
-              name="storeName"
-              placeholder="Store name (e.g., Target, Nike)"
-              defaultValue={item?.store_name || ""}
-            />
-            <Input
-              name="storeAddress"
-              placeholder="Store address or city"
-              defaultValue={item?.store_address || ""}
+            <StorePicker
+              defaultStoreName={item?.store_name || ""}
+              defaultStoreAddress={item?.store_address || ""}
+              onStoreSelected={(store) => {
+                // StorePicker handles hidden inputs for form submission
+              }}
             />
             <p className="text-xs text-muted-foreground">
               Subscribers near this store will be alerted
