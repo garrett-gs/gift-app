@@ -111,6 +111,10 @@ export interface Database {
           quantity_purchased: number;
           is_archived: boolean;
           sort_order: number;
+          store_name: string | null;
+          store_address: string | null;
+          store_lat: number | null;
+          store_lng: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -129,6 +133,10 @@ export interface Database {
           quantity_purchased?: number;
           is_archived?: boolean;
           sort_order?: number;
+          store_name?: string | null;
+          store_address?: string | null;
+          store_lat?: number | null;
+          store_lng?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -145,6 +153,10 @@ export interface Database {
           quantity_purchased?: number;
           is_archived?: boolean;
           sort_order?: number;
+          store_name?: string | null;
+          store_address?: string | null;
+          store_lat?: number | null;
+          store_lng?: number | null;
           updated_at?: string;
         };
         Relationships: [];

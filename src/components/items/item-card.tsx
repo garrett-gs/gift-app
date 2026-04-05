@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { PRIORITY_LABELS, PRIORITY_COLORS } from "@/lib/constants";
 import { PurchaseButton } from "@/components/items/purchase-button";
@@ -74,6 +74,13 @@ export function ItemCard({
             </span>
           )}
         </div>
+
+        {item.store_name && (
+          <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3 shrink-0" />
+            {item.store_name}{item.store_address ? ` — ${item.store_address}` : ""}
+          </p>
+        )}
 
         {item.notes && (
           <p className="mt-2 text-xs text-muted-foreground italic">

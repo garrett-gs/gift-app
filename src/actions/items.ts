@@ -5,6 +5,30 @@ import { revalidatePath } from "next/cache";
 import { itemSchema } from "@/lib/validators/item";
 import type { ActionResult } from "@/lib/types";
 
+// Free geocoding using OpenStreetMap Nominatim
+async function geocodeAddress(
+  address: string
+): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(address)}`,
+      {
+        headers: { "User-Agent": "GIFTApp/1.0" },
+        signal: AbortSignal.timeout(5000),
+      }
+    );
+    if (res.ok) {
+      const data = await res.json();
+      if (data.length > 0) {
+        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      }
+    }
+  } catch {
+    // Geocoding failed silently — store will be saved without coordinates
+  }
+  return null;
+}
+
 export async function addItem(
   registryId: string,
   formData: FormData
@@ -23,6 +47,8 @@ export async function addItem(
   const imageUrl = formData.get("imageUrl") as string || null;
   const category = formData.get("category") as string || "general";
   const size = formData.get("size") as string || null;
+  const storeName = formData.get("storeName") as string || null;
+  const storeAddress = formData.get("storeAddress") as string || null;
 
   // Append size info to notes if provided
   let notes = raw.notes as string || "";
@@ -51,6 +77,17 @@ export async function addItem(
     return { success: false, error: "Registry not found" };
   }
 
+  // Geocode store address if provided
+  let storeLat: number | null = null;
+  let storeLng: number | null = null;
+  if (storeAddress) {
+    const coords = await geocodeAddress(storeAddress);
+    if (coords) {
+      storeLat = coords.lat;
+      storeLng = coords.lng;
+    }
+  }
+
   const { data, error } = await supabase.from("registry_items").insert({
     registry_id: registryId,
     name: parsed.data.name,
@@ -62,6 +99,10 @@ export async function addItem(
     priority: parsed.data.priority,
     notes: notes || null,
     quantity_desired: parsed.data.quantityDesired,
+    store_name: storeName,
+    store_address: storeAddress,
+    store_lat: storeLat,
+    store_lng: storeLng,
   }).select().single();
 
   if (error) {
@@ -95,6 +136,8 @@ export async function updateItem(
   const imageUrl = formData.get("imageUrl") as string || null;
   const category = formData.get("category") as string || "general";
   const size = formData.get("size") as string || null;
+  const storeName = formData.get("storeName") as string || null;
+  const storeAddress = formData.get("storeAddress") as string || null;
 
   let notes = raw.notes as string || "";
   if (size) {
@@ -111,6 +154,16 @@ export async function updateItem(
 
   const supabase = await createClient();
 
+  let storeLat: number | null = null;
+  let storeLng: number | null = null;
+  if (storeAddress) {
+    const coords = await geocodeAddress(storeAddress);
+    if (coords) {
+      storeLat = coords.lat;
+      storeLng = coords.lng;
+    }
+  }
+
   const { error } = await supabase
     .from("registry_items")
     .update({
@@ -123,6 +176,10 @@ export async function updateItem(
       priority: parsed.data.priority,
       notes: notes || null,
       quantity_desired: parsed.data.quantityDesired,
+      store_name: storeName,
+      store_address: storeAddress,
+      store_lat: storeLat,
+      store_lng: storeLng,
     })
     .eq("id", itemId);
 

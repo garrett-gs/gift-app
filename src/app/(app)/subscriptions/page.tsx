@@ -3,6 +3,7 @@ import { Users, Gift, Calendar } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
+import { NearbyAlert } from "@/components/shared/nearby-alert";
 import { UnsubscribeButton } from "@/components/invitations/unsubscribe-button";
 import { OCCASION_TYPES } from "@/lib/constants";
 import type { Metadata } from "next";
@@ -47,6 +48,59 @@ export default async function SubscriptionsPage() {
     (owners || []).map((o) => [o.id, o.display_name])
   );
 
+  // Fetch store-tagged items from subscribed registries for nearby alerts
+  const registryIds = (subscriptions || [])
+    .map((s) => {
+      const reg = s.registries as unknown as { id: string };
+      return reg?.id;
+    })
+    .filter(Boolean);
+
+  let storeItems: {
+    item_name: string;
+    store_name: string;
+    store_address: string;
+    store_lat: number;
+    store_lng: number;
+    owner_name: string;
+    registry_slug: string;
+  }[] = [];
+
+  if (registryIds.length > 0) {
+    const { data: itemsWithStores } = await supabase
+      .from("registry_items")
+      .select("name, store_name, store_address, store_lat, store_lng, registry_id")
+      .in("registry_id", registryIds)
+      .not("store_lat", "is", null)
+      .not("store_lng", "is", null)
+      .eq("is_archived", false);
+
+    if (itemsWithStores) {
+      // Build registry->owner mapping
+      const regOwnerMap = new Map(
+        (subscriptions || []).map((s) => {
+          const reg = s.registries as unknown as { id: string; slug: string; owner_id: string };
+          return [reg?.id, { slug: reg?.slug, ownerName: ownerMap.get(reg?.owner_id) || "Someone" }];
+        })
+      );
+
+      storeItems = itemsWithStores
+        .filter((i) => i.store_lat && i.store_lng && i.store_name)
+        .map((i) => {
+          const regInfo = regOwnerMap.get(i.registry_id);
+          return {
+            item_name: i.name,
+            store_name: i.store_name!,
+            store_address: i.store_address || "",
+            store_lat: Number(i.store_lat),
+            store_lng: Number(i.store_lng),
+            owner_name: regInfo?.ownerName || "Someone",
+            registry_slug: regInfo?.slug || "",
+          };
+        });
+    }
+  }
+
   return (
     <div>
       <h1 className="text-2xl font-bold">Subscriptions</h1>
@@ -55,6 +109,7 @@ export default async function SubscriptionsPage() {
       </p>
 
       <div className="mt-8">
+        <NearbyAlert storeItems={storeItems} />
         {subscriptions && subscriptions.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {subscriptions.map((sub) => {

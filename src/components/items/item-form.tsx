@@ -338,6 +338,24 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
             </div>
           </div>
 
+          {/* Store location */}
+          <div className="space-y-3">
+            <Label>Seen in a store? (optional)</Label>
+            <Input
+              name="storeName"
+              placeholder="Store name (e.g., Target, Nike)"
+              defaultValue={item?.store_name || ""}
+            />
+            <Input
+              name="storeAddress"
+              placeholder="Store address or city"
+              defaultValue={item?.store_address || ""}
+            />
+            <p className="text-xs text-muted-foreground">
+              Subscribers near this store will be alerted
+            </p>
+          </div>
+
           <div className="space-y-1">
             <Label htmlFor="notes">Notes</Label>
             <Textarea
