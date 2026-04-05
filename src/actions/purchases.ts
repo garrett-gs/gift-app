@@ -7,7 +7,8 @@ import type { ActionResult } from "@/lib/types";
 export async function markPurchased(
   itemId: string,
   registrySlug: string,
-  quantity: number = 1
+  quantity: number = 1,
+  isAnonymous: boolean = false
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -23,6 +24,7 @@ export async function markPurchased(
     purchaser_id: user.id,
     quantity,
     is_purchased: true,
+    is_anonymous: isAnonymous,
   });
 
   if (error) {
@@ -38,7 +40,8 @@ export async function markPurchased(
 
 export async function markPlanningToBuy(
   itemId: string,
-  registrySlug: string
+  registrySlug: string,
+  isAnonymous: boolean = false
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -54,6 +57,7 @@ export async function markPlanningToBuy(
     purchaser_id: user.id,
     quantity: 1,
     is_purchased: false,
+    is_anonymous: isAnonymous,
   });
 
   if (error) {

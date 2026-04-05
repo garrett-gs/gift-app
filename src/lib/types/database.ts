@@ -171,6 +171,7 @@ export interface Database {
           purchaser_id: string;
           quantity: number;
           is_purchased: boolean;
+          is_anonymous: boolean;
           notes: string | null;
           purchased_at: string;
           created_at: string;
@@ -181,6 +182,7 @@ export interface Database {
           purchaser_id: string;
           quantity?: number;
           is_purchased?: boolean;
+          is_anonymous?: boolean;
           notes?: string | null;
           purchased_at?: string;
           created_at?: string;
@@ -302,6 +304,10 @@ export interface Database {
         Returns: Json;
       };
       follow_registry: {
+        Args: { p_registry_id: string };
+        Returns: Json;
+      };
+      get_thank_you_purchases: {
         Args: { p_registry_id: string };
         Returns: Json;
       };

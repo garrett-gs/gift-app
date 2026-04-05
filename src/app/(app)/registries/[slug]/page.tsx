@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, Calendar, Gift } from "lucide-react";
+import { Pencil, Calendar, Gift, Heart } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -155,6 +155,13 @@ export default async function RegistryDetailPage({ params }: Props) {
             >
               <Pencil className="h-4 w-4" />
               Edit
+            </Link>
+            <Link
+              href={`/registries/${slug}/thank-yous`}
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <Heart className="h-3 w-3" />
+              Thank Yous
             </Link>
           </div>
         )}
