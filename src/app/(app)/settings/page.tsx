@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Calendar, Gift, Heart, Mail, Phone, Sparkles, ThumbsDown } from "lucide-react";
+import { Cake, Calendar, Gift, Heart, Mail, Phone, Sparkles, ThumbsDown } from "lucide-react";
 import { ProfileEditor } from "@/components/auth/profile-editor";
 import { EditProfileToggle } from "@/components/auth/edit-profile-toggle";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,78 +68,78 @@ export default async function SettingsPage() {
       {/* Profile Header */}
       <Card>
         <CardContent className="p-5">
-          <div className="flex gap-5">
-            {/* Large avatar */}
-            <div className="shrink-0">
-              {profile?.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.display_name}
-                  className="h-36 w-36 rounded-2xl object-cover shadow-md"
-                />
-              ) : (
-                <div className="flex h-36 w-36 items-center justify-center rounded-2xl bg-muted text-4xl font-bold text-muted-foreground shadow-md">
-                  {initials}
+          {/* Photo centered on top */}
+          <div className="flex justify-center">
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.display_name}
+                className="h-40 w-40 rounded-2xl object-cover shadow-md"
+              />
+            ) : (
+              <div className="flex h-40 w-40 items-center justify-center rounded-2xl bg-muted text-5xl font-bold text-muted-foreground shadow-md">
+                {initials}
+              </div>
+            )}
+          </div>
+
+          {/* Name + contact info */}
+          <div className="mt-4 text-center">
+            <h1 className="text-2xl font-bold">{profile?.display_name}</h1>
+            <div className="mt-1 flex flex-col items-center gap-0.5 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5" />
+                <span>{profile?.email}</span>
+              </div>
+              {profile?.phone && (
+                <div className="flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5" />
+                  <span>{formatPhone(profile.phone)}</span>
                 </div>
               )}
-            </div>
-
-            {/* Info to the right */}
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl font-bold truncate">
-                {profile?.display_name}
-              </h1>
-              <div className="flex items-center gap-1 mt-0.5 text-sm text-muted-foreground">
-                <Mail className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{profile?.email}</span>
-              </div>
-
-              {/* Stats */}
-              <div className="mt-3 flex items-center gap-4 text-sm">
-                <div>
-                  <span className="font-bold">{registryCount}</span>{" "}
-                  <span className="text-muted-foreground">Registries</span>
-                </div>
-                <div>
-                  <span className="font-bold">{followerCount}</span>{" "}
-                  <span className="text-muted-foreground">Followers</span>
-                </div>
-                <div>
-                  <span className="font-bold">{followingCount || 0}</span>{" "}
-                  <span className="text-muted-foreground">Following</span>
-                </div>
-              </div>
-
-              {/* Bio */}
-              {profile?.bio && (
-                <p className="mt-2 text-sm text-muted-foreground line-clamp-3">{profile.bio}</p>
-              )}
-
-              {/* Date pills */}
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {profile?.birthday && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium">
-                    <Calendar className="h-3 w-3" />
-                    {formatDate(profile.birthday)}
-                  </span>
-                )}
-                {profile?.anniversary && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium">
-                    <Heart className="h-3 w-3" />
-                    {formatDate(profile.anniversary)}
-                  </span>
-                )}
-                {profile?.phone && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium">
-                    <Phone className="h-3 w-3" />
-                    {formatPhone(profile.phone)}
-                  </span>
-                )}
-              </div>
             </div>
           </div>
 
-          {/* Interests & Dislikes — full width below */}
+          {/* Stats row */}
+          <div className="mt-4 flex items-center justify-center gap-8 text-sm">
+            <div className="text-center">
+              <p className="text-lg font-bold">{registryCount}</p>
+              <p className="text-xs text-muted-foreground">Registries</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold">{followerCount}</p>
+              <p className="text-xs text-muted-foreground">Followers</p>
+            </div>
+            <div className="text-center">
+              <p className="text-lg font-bold">{followingCount || 0}</p>
+              <p className="text-xs text-muted-foreground">Following</p>
+            </div>
+          </div>
+
+          {/* Bio / Description */}
+          {profile?.bio && (
+            <p className="mt-4 text-sm text-muted-foreground text-center">{profile.bio}</p>
+          )}
+
+          {/* Important date pills */}
+          {(profile?.birthday || profile?.anniversary) && (
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              {profile?.birthday && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium">
+                  <Cake className="h-3.5 w-3.5" />
+                  Birthday: {formatDate(profile.birthday)}
+                </span>
+              )}
+              {profile?.anniversary && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs font-medium">
+                  <Heart className="h-3.5 w-3.5" />
+                  Anniversary: {formatDate(profile.anniversary)}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Interests & Dislikes */}
           {(profile?.interests || profile?.dislikes) && (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {profile?.interests && (
