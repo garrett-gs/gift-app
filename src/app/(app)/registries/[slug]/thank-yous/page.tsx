@@ -60,7 +60,7 @@ export default async function ThankYousPage({ params }: Props) {
     p_registry_id: registry.id,
   });
 
-  const purchases = (purchaseData || []) as ThankYouPurchase[];
+  const purchases = (purchaseData || []) as unknown as ThankYouPurchase[];
 
   // Build map of item_id -> purchasers
   const purchaseMap = new Map<string, { name: string; anonymous: boolean }[]>();
