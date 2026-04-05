@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 
-export function LoginForm() {
+export function LoginForm({ redirectTo }: { redirectTo?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const router = useRouter();
@@ -27,7 +27,7 @@ export function LoginForm() {
     setPending(false);
 
     if (result.success) {
-      router.push("/dashboard");
+      router.push(redirectTo || "/dashboard");
       router.refresh();
     } else {
       setError(result.error);
@@ -80,7 +80,7 @@ export function LoginForm() {
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-primary underline-offset-4 hover:underline">
+          <Link href={redirectTo ? `/signup?next=${encodeURIComponent(redirectTo)}` : "/signup"} className="text-primary underline-offset-4 hover:underline">
             Sign up
           </Link>
         </p>

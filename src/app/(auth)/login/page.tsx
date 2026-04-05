@@ -5,6 +5,11 @@ export const metadata: Metadata = {
   title: "Log In",
 };
 
-export default function LoginPage() {
-  return <LoginForm />;
+type Props = {
+  searchParams: Promise<{ next?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: Props) {
+  const { next } = await searchParams;
+  return <LoginForm redirectTo={next} />;
 }

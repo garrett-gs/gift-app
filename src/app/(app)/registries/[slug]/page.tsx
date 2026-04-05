@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { AddItemDialog } from "@/components/items/add-item-dialog";
 import { ItemGrid } from "@/components/items/item-grid";
 import { QuickShareButton } from "@/components/invitations/quick-share-button";
+import { SubscribeButton } from "@/components/invitations/subscribe-button";
 import { OCCASION_TYPES } from "@/lib/constants";
 import { buttonVariants } from "@/lib/button-variants";
 import { cn } from "@/lib/utils";
@@ -94,6 +95,17 @@ export default async function RegistryDetailPage({ params }: Props) {
     }
   }
 
+  // Get owner profile for display to non-owners
+  let ownerName = "";
+  if (!isOwner) {
+    const { data: ownerProfile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", registry.owner_id)
+      .single();
+    ownerName = ownerProfile?.display_name || "Someone";
+  }
+
   const occasionLabel = OCCASION_TYPES.find(
     (o) => o.value === registry.occasion
   )?.label;
@@ -108,6 +120,11 @@ export default async function RegistryDetailPage({ params }: Props) {
             <Badge variant="secondary">Public</Badge>
           )}
         </div>
+        {!isOwner && (
+          <p className="mt-1 text-sm font-medium text-muted-foreground">
+            by {ownerName}
+          </p>
+        )}
         {registry.description && (
           <p className="mt-1 text-muted-foreground">
             {registry.description}
@@ -140,6 +157,23 @@ export default async function RegistryDetailPage({ params }: Props) {
               Edit
             </Link>
           </div>
+        )}
+
+        {/* Non-owner, not yet subscribed — show follow button */}
+        {!isOwner && !isSubscriber && user && (
+          <div className="mt-4 rounded-lg border border-dashed p-4">
+            <p className="mb-3 text-sm text-muted-foreground">
+              Follow this registry to mark items as purchased and coordinate gifts with others.
+            </p>
+            <SubscribeButton registryId={registry.id} />
+          </div>
+        )}
+
+        {/* Subscriber confirmation */}
+        {!isOwner && isSubscriber && (
+          <p className="mt-3 text-xs text-green-600 font-medium">
+            You&apos;re following this registry — tap &ldquo;I&apos;ll get this&rdquo; on any item to claim it
+          </p>
         )}
       </div>
 

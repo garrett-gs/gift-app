@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import Link from "next/link";
 
-export function SignUpForm() {
+export function SignUpForm({ redirectTo }: { redirectTo?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [pending, setPending] = useState(false);
@@ -39,6 +39,7 @@ export function SignUpForm() {
           <CardTitle>Check your email</CardTitle>
           <CardDescription>
             We sent you a confirmation link. Click it to activate your account.
+            {redirectTo && " You'll be redirected after confirming."}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -95,7 +96,7 @@ export function SignUpForm() {
         </form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/login" className="text-primary underline-offset-4 hover:underline">
+          <Link href={redirectTo ? `/login?next=${encodeURIComponent(redirectTo)}` : "/login"} className="text-primary underline-offset-4 hover:underline">
             Log in
           </Link>
         </p>

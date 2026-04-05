@@ -116,10 +116,12 @@ export function ItemCard({
               href={item.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+              className={`inline-flex items-center gap-1 text-xs hover:underline ${
+                !isOwner ? "rounded-md bg-primary/10 px-2.5 py-1.5 font-medium text-primary" : "text-primary"
+              }`}
             >
               <ExternalLink className="h-3 w-3" />
-              View product
+              {!isOwner ? "Buy this item" : "View product"}
             </a>
           </div>
         )}
