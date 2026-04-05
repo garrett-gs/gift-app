@@ -31,8 +31,8 @@ export function TopNav({ displayName }: { displayName: string }) {
       </header>
 
       {/* Bottom tab bar — mobile only */}
-      <nav className="fixed left-0 right-0 z-50 border-t bg-background md:hidden" style={{ bottom: "env(safe-area-inset-bottom, 0px)" }}>
-        <div className="flex items-center justify-around px-2 pt-2 pb-2">
+      <nav className="fixed left-0 right-0 z-50 bg-background md:hidden" style={{ bottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <div className="flex items-stretch justify-around px-2">
           {bottomTabs.map((tab) => {
             const isActive = pathname === tab.href || pathname.startsWith(tab.href + "/");
 
@@ -41,13 +41,17 @@ export function TopNav({ displayName }: { displayName: string }) {
                 key={tab.href}
                 href={tab.href}
                 className={cn(
-                  "flex flex-col items-center gap-1 rounded-xl px-5 py-2 text-[11px] font-medium transition-colors",
+                  "relative flex flex-1 flex-col items-center gap-1 pt-2 pb-2 text-[11px] font-medium transition-colors",
                   isActive
-                    ? "bg-primary text-primary-foreground"
+                    ? "text-foreground"
                     : "text-muted-foreground"
                 )}
               >
-                <tab.icon className="h-6 w-6" />
+                {/* Active indicator bar */}
+                {isActive && (
+                  <span className="absolute top-0 left-4 right-4 h-[3px] rounded-b-full bg-foreground" />
+                )}
+                <tab.icon className={cn("h-6 w-6", isActive && "fill-foreground")} />
                 <span>{tab.label}</span>
               </Link>
             );
