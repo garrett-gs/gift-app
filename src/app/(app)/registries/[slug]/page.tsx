@@ -101,37 +101,35 @@ export default async function RegistryDetailPage({ params }: Props) {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{registry.title}</h1>
-            {registry.is_public && (
-              <Badge variant="secondary">Public</Badge>
-            )}
-          </div>
-          {registry.description && (
-            <p className="mt-1 text-muted-foreground">
-              {registry.description}
-            </p>
+      <div>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">{registry.title}</h1>
+          {registry.is_public && (
+            <Badge variant="secondary">Public</Badge>
           )}
-          <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
-            {occasionLabel && (
-              <span className="flex items-center gap-1">
-                <Gift className="h-4 w-4" />
-                {occasionLabel}
-              </span>
-            )}
-            {registry.occasion_date && (
-              <span className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                {new Date(registry.occasion_date).toLocaleDateString()}
-              </span>
-            )}
-          </div>
+        </div>
+        {registry.description && (
+          <p className="mt-1 text-muted-foreground">
+            {registry.description}
+          </p>
+        )}
+        <div className="mt-2 flex items-center gap-4 text-sm text-muted-foreground">
+          {occasionLabel && (
+            <span className="flex items-center gap-1">
+              <Gift className="h-4 w-4" />
+              {occasionLabel}
+            </span>
+          )}
+          {registry.occasion_date && (
+            <span className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              {new Date(registry.occasion_date).toLocaleDateString()}
+            </span>
+          )}
         </div>
 
         {isOwner && (
-          <div className="flex items-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             <AddItemDialog registryId={registry.id} />
             <QuickShareButton registryId={registry.id} registryTitle={registry.title} />
             <Link
