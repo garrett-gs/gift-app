@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Users, ContactRound, Loader2, Send, Check } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Search, Users, ContactRound, Loader2, Send, Check, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { subscribe } from "@/actions/subscriptions";
 import Link from "next/link";
 
 interface FoundFriend {
@@ -29,6 +31,9 @@ export function FindFriends() {
   const [syncCount, setSyncCount] = useState(0);
   const [emailInput, setEmailInput] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [pendingFollow, setPendingFollow] = useState<string | null>(null);
+  const router = useRouter();
 
   const hasContactPicker =
     typeof window !== "undefined" && "contacts" in navigator;
@@ -125,6 +130,17 @@ export function FindFriends() {
     }
   }
 
+  async function handleFollowAll(friend: FoundFriend) {
+    setPendingFollow(friend.id);
+    const unfollowed = friend.registries.filter((r) => !r.isSubscribed);
+    for (const reg of unfollowed) {
+      await subscribe(reg.id);
+    }
+    setFollowingIds((prev) => new Set([...prev, friend.id]));
+    setPendingFollow(null);
+    router.refresh();
+  }
+
   const initials = (name: string) =>
     name
       .split(" ")
@@ -197,48 +213,84 @@ export function FindFriends() {
                 {friends.length}{" "}
                 {friends.length === 1 ? "friend" : "friends"} on GIFT
               </p>
-              {friends.map((friend) => (
-                <Card key={friend.id}>
-                  <CardContent className="flex items-center gap-4 p-4">
-                    <Avatar className="h-12 w-12">
-                      {friend.avatarUrl && (
-                        <AvatarImage
-                          src={friend.avatarUrl}
-                          alt={friend.displayName}
-                        />
-                      )}
-                      <AvatarFallback>
-                        {initials(friend.displayName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold">{friend.displayName}</p>
-                      {friend.registries.length > 0 ? (
-                        <div className="mt-1 space-y-1">
+              {friends.map((friend) => {
+                const allFollowed = friend.registries.every((r) => r.isSubscribed) || followingIds.has(friend.id);
+                const hasRegistries = friend.registries.length > 0;
+                const isFollowing = pendingFollow === friend.id;
+
+                return (
+                  <Card key={friend.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-4">
+                        <Link href={`/people/${friend.id}`}>
+                          <Avatar className="h-14 w-14">
+                            {friend.avatarUrl && (
+                              <AvatarImage
+                                src={friend.avatarUrl}
+                                alt={friend.displayName}
+                              />
+                            )}
+                            <AvatarFallback className="text-lg">
+                              {initials(friend.displayName)}
+                            </AvatarFallback>
+                          </Avatar>
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <Link href={`/people/${friend.id}`} className="hover:underline">
+                            <p className="font-semibold text-base">{friend.displayName}</p>
+                          </Link>
+                          <p className="text-xs text-muted-foreground">
+                            {hasRegistries
+                              ? `${friend.registries.length} ${friend.registries.length === 1 ? "registry" : "registries"}`
+                              : "No registries yet"}
+                          </p>
+                        </div>
+                        {hasRegistries && !allFollowed && (
+                          <Button
+                            size="sm"
+                            className="gap-1.5 shrink-0"
+                            onClick={() => handleFollowAll(friend)}
+                            disabled={isFollowing}
+                          >
+                            {isFollowing ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <UserPlus className="h-3.5 w-3.5" />
+                            )}
+                            {isFollowing ? "Following..." : "Follow"}
+                          </Button>
+                        )}
+                        {allFollowed && hasRegistries && (
+                          <span className="flex items-center gap-1 text-xs font-medium text-green-600 shrink-0">
+                            <Check className="h-3.5 w-3.5" />
+                            Following
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Registry list */}
+                      {hasRegistries && (
+                        <div className="mt-3 ml-[4.5rem] space-y-1">
                           {friend.registries.map((reg) => (
                             <Link
                               key={reg.id}
                               href={`/registries/${reg.slug}`}
-                              className="block text-xs text-primary hover:underline"
+                              className="block text-sm text-primary hover:underline"
                             >
                               {reg.title}
-                              {reg.isSubscribed && (
-                                <span className="ml-1 text-muted-foreground">
+                              {(reg.isSubscribed || followingIds.has(friend.id)) && (
+                                <span className="ml-1 text-xs text-muted-foreground">
                                   (following)
                                 </span>
                               )}
                             </Link>
                           ))}
                         </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">
-                          No public registries yet
-                        </p>
                       )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </>
           ) : (
             <div className="rounded-lg border border-dashed px-6 py-12 text-center">
