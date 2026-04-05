@@ -67,10 +67,19 @@ export default async function MyPeoplePage() {
     : { data: [] };
 
   // Group registries by owner
+  type PersonProfile = {
+    id: string;
+    display_name: string;
+    avatar_url: string | null;
+    bio: string | null;
+    birthday: string | null;
+    interests: string | null;
+  };
+
   const peopleMap = new Map<
     string,
     {
-      profile: (typeof owners extends (infer T)[] | null ? T : never);
+      profile: PersonProfile;
       registries: {
         id: string;
         title: string;
@@ -82,7 +91,7 @@ export default async function MyPeoplePage() {
   >();
 
   for (const owner of owners || []) {
-    peopleMap.set(owner.id, { profile: owner, registries: [] });
+    peopleMap.set(owner.id, { profile: owner as PersonProfile, registries: [] });
   }
 
   for (const sub of subscriptions || []) {
