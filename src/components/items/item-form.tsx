@@ -19,6 +19,7 @@ import { BarcodeScanner } from "@/components/items/barcode-scanner";
 import {
   PRIORITY_LABELS,
   ITEM_CATEGORIES,
+  SHOE_WIDTHS,
   CLOTHING_SIZES,
   SHOE_SIZES,
 } from "@/lib/constants";
@@ -40,6 +41,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
   const [imageUrl, setImageUrl] = useState(item?.image_url || "");
   const [category, setCategory] = useState("general");
   const [selectedSize, setSelectedSize] = useState("");
+  const [shoeWidth, setShoeWidth] = useState("regular");
 
   // Form field state for barcode auto-fill
   const [name, setName] = useState(item?.name || "");
@@ -106,7 +108,10 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
   async function handleSubmit(formData: FormData) {
     formData.set("imageUrl", imageUrl);
     formData.set("category", category);
-    formData.set("size", selectedSize);
+    const sizeValue = category === "shoes" && selectedSize
+      ? `${selectedSize} ${shoeWidth !== "regular" ? `(${SHOE_WIDTHS.find(w => w.value === shoeWidth)?.label})` : ""}`.trim()
+      : selectedSize;
+    formData.set("size", sizeValue);
 
     setPending(true);
     setError(null);
@@ -290,6 +295,29 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
                     }`}
                   >
                     {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Shoe Width */}
+          {showShoeSizes && (
+            <div className="space-y-1">
+              <Label>Width</Label>
+              <div className="flex flex-wrap gap-2">
+                {SHOE_WIDTHS.map((width) => (
+                  <button
+                    key={width.value}
+                    type="button"
+                    onClick={() => setShoeWidth(width.value)}
+                    className={`rounded-md border px-3 py-1.5 text-sm font-medium transition-colors ${
+                      shoeWidth === width.value
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border hover:bg-muted"
+                    }`}
+                  >
+                    {width.label}
                   </button>
                 ))}
               </div>
