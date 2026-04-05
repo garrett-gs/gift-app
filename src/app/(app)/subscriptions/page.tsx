@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { Heart, Gift, Calendar, Cake, ChevronRight } from "lucide-react";
+import { Heart, Cake, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/shared/empty-state";
 import { NearbyAlert } from "@/components/shared/nearby-alert";
-import { OCCASION_TYPES } from "@/lib/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -193,7 +192,7 @@ export default async function MyPeoplePage() {
 
       <div className="mt-6">
         {people.length > 0 ? (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {people.map(({ profile, registries }) => {
               const upcomingBday = getUpcomingBirthday(profile.birthday);
               const birthdayDate = profile.birthday
@@ -204,91 +203,50 @@ export default async function MyPeoplePage() {
                 : null;
 
               return (
-                <div
+                <Link
                   key={profile.id}
-                  className="rounded-xl border bg-card overflow-hidden"
+                  href={`/people/${profile.id}`}
+                  className="flex items-center gap-4 rounded-xl border bg-card p-4 transition-colors hover:bg-muted/50 active:bg-muted"
                 >
-                  {/* Person header */}
-                  <div className="flex items-center gap-4 p-4">
-                    {profile.avatar_url ? (
-                      <img
-                        src={profile.avatar_url}
-                        alt={profile.display_name}
-                        className="h-14 w-14 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
-                        {profile.display_name?.[0]?.toUpperCase() || "?"}
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <h2 className="font-semibold text-lg truncate">
-                        {profile.display_name}
-                      </h2>
-                      {profile.bio && (
-                        <p className="text-sm text-muted-foreground line-clamp-1">
-                          {profile.bio}
-                        </p>
-                      )}
-                      <div className="flex flex-wrap items-center gap-3 mt-1">
-                        {birthdayDate && (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Cake className="h-3 w-3" />
-                            {birthdayDate}
-                          </span>
-                        )}
-                        {upcomingBday && (
-                          <span className="inline-flex items-center rounded-full bg-pink-100 px-2 py-0.5 text-xs font-medium text-pink-700">
-                            {upcomingBday}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Interests/dislikes hint */}
-                  {profile.interests && (
-                    <div className="px-4 pb-2">
-                      <p className="text-xs text-muted-foreground">
-                        <span className="font-medium">Loves:</span> {profile.interests}
-                      </p>
+                  {profile.avatar_url ? (
+                    <img
+                      src={profile.avatar_url}
+                      alt={profile.display_name}
+                      className="h-16 w-16 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-xl font-bold text-primary">
+                      {profile.display_name?.[0]?.toUpperCase() || "?"}
                     </div>
                   )}
-
-                  {/* Their registries */}
-                  <div className="border-t">
-                    {registries.map((reg) => {
-                      const occasionLabel = OCCASION_TYPES.find(
-                        (o) => o.value === reg.occasion
-                      )?.label;
-
-                      return (
-                        <Link
-                          key={reg.id}
-                          href={`/registries/${reg.slug}`}
-                          className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-muted/50 border-b last:border-b-0"
-                        >
-                          <Gift className="h-4 w-4 shrink-0 text-muted-foreground" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">
-                              {reg.title}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              {occasionLabel && <span>{occasionLabel}</span>}
-                              {reg.occasion_date && (
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  {new Date(reg.occasion_date).toLocaleDateString()}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                        </Link>
-                      );
-                    })}
+                  <div className="flex-1 min-w-0">
+                    <h2 className="font-semibold text-lg truncate">
+                      {profile.display_name}
+                    </h2>
+                    {profile.bio && (
+                      <p className="text-sm text-muted-foreground line-clamp-1">
+                        {profile.bio}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-3 mt-1">
+                      {birthdayDate && (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Cake className="h-3 w-3" />
+                          {birthdayDate}
+                        </span>
+                      )}
+                      {upcomingBday && (
+                        <span className="inline-flex items-center rounded-full bg-pink-100 px-2 py-0.5 text-xs font-medium text-pink-700">
+                          {upcomingBday}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {registries.length} {registries.length === 1 ? "registry" : "registries"}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                  <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                </Link>
               );
             })}
           </div>
