@@ -141,9 +141,14 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
         currentImageUrl={imageUrl || null}
         onImageUploaded={setImageUrl}
         onProductIdentified={(product) => {
-          if (product.name) setName((prev) => prev || product.name!);
-          if (product.price) setPrice((prev) => prev || String(product.price));
-          if (product.url) setUrl((prev) => prev || product.url!);
+          if (product.name) setName(product.name);
+          if (product.price) setPrice(String(product.price));
+          if (product.url) {
+            setUrl(product.url);
+            // Auto-fetch more details from the product URL
+            fetchUrlMetadata(product.url, true);
+          }
+          setShowDetails(true);
         }}
       />
       {imageUrl && url && (

@@ -169,9 +169,9 @@ export function ImageUpload({
                 </span>
               )}
               {!identifying && identifyResult && (
-                <span className="flex items-center gap-1 text-xs text-green-300">
-                  <Check className="h-3 w-3" />
-                  Identified
+                <span className="flex items-center gap-1 text-xs text-green-300 max-w-[200px] truncate">
+                  <Check className="h-3 w-3 shrink-0" />
+                  {identifyResult}
                 </span>
               )}
               {!identifying && !identifyResult && uploadedUrl && onProductIdentified && (
