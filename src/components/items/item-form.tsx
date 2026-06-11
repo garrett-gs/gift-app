@@ -38,6 +38,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
   const [error, setError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(!!item);
   const [fetchingUrl, setFetchingUrl] = useState(false);
+  const [scrapeFailed, setScrapeFailed] = useState(false);
   const [detectedSizes, setDetectedSizes] = useState<string[]>([]);
   const [imageUrl, setImageUrl] = useState(item?.image_url || "");
   const [category, setCategory] = useState("general");
@@ -73,6 +74,8 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
   async function fetchUrlMetadata(productUrl: string, force = false) {
     if (!productUrl || !productUrl.startsWith("http")) return;
     setFetchingUrl(true);
+    setScrapeFailed(false);
+    let gotSomething = false;
     try {
       const res = await fetch("/api/scrape-url", {
         method: "POST",
@@ -81,10 +84,10 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
       });
       if (res.ok) {
         const data = await res.json();
-        if (data.image) setImageUrl(data.image);
-        if (data.title) setName((prev: string) => (force || !prev) ? data.title : prev);
-        if (data.description) setDescription((prev: string) => (force || !prev) ? data.description : prev);
-        if (data.price) setPrice((prev: string) => (force || !prev) ? String(data.price) : prev);
+        if (data.image) { setImageUrl(data.image); gotSomething = true; }
+        if (data.title) { setName((prev: string) => (force || !prev) ? data.title : prev); gotSomething = true; }
+        if (data.description) { setDescription((prev: string) => (force || !prev) ? data.description : prev); gotSomething = true; }
+        if (data.price) { setPrice((prev: string) => (force || !prev) ? String(data.price) : prev); gotSomething = true; }
         if (data.category) {
           setCategory(data.category);
           setShowDetails(true);
@@ -97,6 +100,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
       // Silently fail — user can still fill in manually
     }
     setFetchingUrl(false);
+    if (!gotSomething) setScrapeFailed(true);
   }
 
   // Auto-fetch when editing an item that has a URL but no image
@@ -211,6 +215,7 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
                 fetchUrlMetadata(url);
               }
             }}
+            onFocus={() => setScrapeFailed(false)}
           />
           {fetchingUrl && (
             <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-muted-foreground" />
@@ -219,7 +224,12 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
         {fetchingUrl && (
           <p className="text-xs text-muted-foreground">Fetching product info...</p>
         )}
-        {!fetchingUrl && url.startsWith("http") && !imageUrl && (
+        {!fetchingUrl && scrapeFailed && (
+          <p className="text-xs text-muted-foreground">
+            Couldn&apos;t fetch info from this link — you can still fill it in manually.
+          </p>
+        )}
+        {!fetchingUrl && !scrapeFailed && url.startsWith("http") && !imageUrl && (
           <button
             type="button"
             onClick={() => fetchUrlMetadata(url, true)}

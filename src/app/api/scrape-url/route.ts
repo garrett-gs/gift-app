@@ -26,22 +26,30 @@ export async function POST(request: Request) {
 
     const html = await res.text();
 
-    // Extract Open Graph and meta tags
+    // JSON-LD Product blocks often carry price (and richer name/image/description)
+    // when OG tags don't. Many retailers (NFM, most Demandware/Salesforce Commerce
+    // sites, Shopify) put price only here.
+    const ld = extractProductJsonLd(html);
+
     const ogImage = extractMeta(html, 'property="og:image"') ||
       extractMeta(html, "property='og:image'") ||
-      extractMeta(html, 'name="og:image"');
+      extractMeta(html, 'name="og:image"') ||
+      ld.image;
 
     const ogTitle = extractMeta(html, 'property="og:title"') ||
       extractMeta(html, "property='og:title'") ||
       extractMeta(html, 'name="og:title"') ||
+      ld.name ||
       extractTitle(html);
 
     const ogDescription = extractMeta(html, 'property="og:description"') ||
       extractMeta(html, "property='og:description'") ||
-      extractMeta(html, 'name="description"');
+      extractMeta(html, 'name="description"') ||
+      ld.description;
 
     const ogPrice = extractMeta(html, 'property="product:price:amount"') ||
-      extractMeta(html, 'property="og:price:amount"');
+      extractMeta(html, 'property="og:price:amount"') ||
+      ld.price;
 
     // Make relative image URLs absolute
     let imageUrl = ogImage || "";
@@ -92,6 +100,87 @@ function extractMeta(html: string, attr: string): string | null {
 function extractTitle(html: string): string | null {
   const match = html.match(/<title[^>]*>([^<]*)<\/title>/i);
   return match ? match[1].trim() : null;
+}
+
+type LdFields = {
+  name: string | null;
+  description: string | null;
+  image: string | null;
+  price: string | null;
+};
+
+function extractProductJsonLd(html: string): LdFields {
+  const empty: LdFields = { name: null, description: null, image: null, price: null };
+  const scriptRe = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = scriptRe.exec(html)) !== null) {
+    const raw = match[1].trim();
+    if (!raw) continue;
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      continue;
+    }
+    const product = findProductNode(parsed);
+    if (product) return readProductFields(product);
+  }
+  return empty;
+}
+
+function findProductNode(node: unknown): Record<string, unknown> | null {
+  if (!node) return null;
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findProductNode(child);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (typeof node !== "object") return null;
+  const obj = node as Record<string, unknown>;
+  const type = obj["@type"];
+  const typeMatches = Array.isArray(type)
+    ? type.some((t) => typeof t === "string" && t.toLowerCase() === "product")
+    : typeof type === "string" && type.toLowerCase() === "product";
+  if (typeMatches) return obj;
+  // schema.org @graph wrapper
+  const graph = obj["@graph"];
+  if (graph) {
+    const found = findProductNode(graph);
+    if (found) return found;
+  }
+  return null;
+}
+
+function readProductFields(product: Record<string, unknown>): LdFields {
+  const name = typeof product.name === "string" ? product.name : null;
+  const description = typeof product.description === "string" ? product.description : null;
+
+  // image: string | string[] | { url: string }
+  let image: string | null = null;
+  const img = product.image;
+  if (typeof img === "string") image = img;
+  else if (Array.isArray(img) && typeof img[0] === "string") image = img[0];
+  else if (img && typeof img === "object" && typeof (img as Record<string, unknown>).url === "string") {
+    image = (img as Record<string, string>).url;
+  }
+
+  // price: offers can be Offer, AggregateOffer, or array of either
+  let price: string | null = null;
+  const offers = product.offers;
+  const offerList = Array.isArray(offers) ? offers : offers ? [offers] : [];
+  for (const offer of offerList) {
+    if (!offer || typeof offer !== "object") continue;
+    const o = offer as Record<string, unknown>;
+    const candidate = o.price ?? o.lowPrice;
+    if (typeof candidate === "string" || typeof candidate === "number") {
+      price = String(candidate);
+      break;
+    }
+  }
+
+  return { name, description, image, price };
 }
 
 function detectCategory(html: string, url: string): string | null {

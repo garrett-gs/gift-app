@@ -39,6 +39,7 @@ export function QuickAddItem({
   const [registryId, setRegistryId] = useState(registries[0]?.id || "");
   const [pending, setPending] = useState(false);
   const [fetching, setFetching] = useState(false);
+  const [scrapeFailed, setScrapeFailed] = useState(false);
   const [added, setAdded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -52,6 +53,8 @@ export function QuickAddItem({
 
   async function fetchFromUrl(productUrl: string) {
     setFetching(true);
+    setScrapeFailed(false);
+    let gotSomething = false;
     try {
       const res = await fetch("/api/scrape-url", {
         method: "POST",
@@ -61,14 +64,15 @@ export function QuickAddItem({
       if (res.ok) {
         const data = await res.json();
         // Always overwrite with scraped data — this is the source of truth
-        if (data.title) setName(data.title);
-        if (data.price) setPrice(String(data.price));
-        if (data.image) setImageUrl(data.image);
+        if (data.title) { setName(data.title); gotSomething = true; }
+        if (data.price) { setPrice(String(data.price)); gotSomething = true; }
+        if (data.image) { setImageUrl(data.image); gotSomething = true; }
       }
     } catch {
       // Silently fail — user can still fill in manually
     }
     setFetching(false);
+    if (!gotSomething) setScrapeFailed(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -219,6 +223,11 @@ export function QuickAddItem({
           onChange={(e) => setUrl(e.target.value)}
           placeholder="Product URL"
         />
+        {!fetching && scrapeFailed && (
+          <p className="text-xs text-muted-foreground">
+            Couldn&apos;t fetch info from this link — you can still fill it in manually.
+          </p>
+        )}
       </div>
 
       {error && <p className="text-sm text-destructive">{error}</p>}
