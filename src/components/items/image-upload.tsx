@@ -92,22 +92,26 @@ export function ImageUpload({
         body: JSON.stringify({ imageUrl }),
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        if (data.found) {
-          setIdentifyResult(data.name || "Product identified");
-          if (onProductIdentified) {
-            onProductIdentified({
-              name: data.name || undefined,
-              price: data.price || undefined,
-              url: data.url || undefined,
-            });
-          }
-        } else {
-          setIdentifyResult("Couldn't identify this product");
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.found) {
+        setIdentifyResult(data.name || "Product identified");
+        if (onProductIdentified) {
+          onProductIdentified({
+            name: data.name || undefined,
+            price: data.price || undefined,
+            url: data.url || undefined,
+          });
         }
+      } else {
+        // Surface the actual reason instead of a generic "couldn't identify"
+        // so config / quota issues are diagnosable.
+        const reason = data.error || (res.ok ? "Couldn't identify this product" : `Identify failed (${res.status})`);
+        console.warn("[identify]", { status: res.status, data });
+        setIdentifyResult(reason);
       }
-    } catch {
+    } catch (e) {
+      console.warn("[identify] network error", e);
       setIdentifyResult("Identification failed");
     }
 
