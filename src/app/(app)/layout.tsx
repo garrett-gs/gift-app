@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopNav } from "@/components/layout/top-nav";
+import { DeepLinkHandler } from "@/components/layout/deep-link-handler";
 
 export default async function AppLayout({
   children,
@@ -24,6 +25,7 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-screen overflow-x-hidden">
+      <DeepLinkHandler />
       <AppSidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <TopNav displayName={displayName} />
