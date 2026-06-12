@@ -146,10 +146,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       found: true,
-      name: result.name || "",
-      brand: result.brand || "",
+      name: (result.name || "").slice(0, 200),
+      brand: (result.brand || "").slice(0, 100),
       category: result.category || "general",
-      description: result.description || "",
+      description: (result.description || "").slice(0, 900),
       price,
       url: "",
     });
