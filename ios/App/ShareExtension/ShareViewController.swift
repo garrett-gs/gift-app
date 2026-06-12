@@ -5,6 +5,7 @@ class ShareViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = .clear
         handleShare()
     }
 
@@ -31,7 +32,6 @@ class ShareViewController: UIViewController {
                         if let text = data as? String, let extracted = self?.firstURL(in: text) {
                             self?.deepLink(url: extracted)
                         } else if let text = data as? String {
-                            // Pass plain text as title so user can still add it manually
                             self?.deepLink(url: "", title: text)
                         } else {
                             self?.close()
@@ -73,7 +73,8 @@ class ShareViewController: UIViewController {
 
     // Share Extensions can't call UIApplication.open directly, so we walk the
     // responder chain to find a UIApplication and call its `openURL:` selector.
-    @objc private func openURL(_ url: URL) -> Bool {
+    @discardableResult
+    private func openURL(_ url: URL) -> Bool {
         var responder: UIResponder? = self
         let selector = sel_registerName("openURL:")
         while let r = responder {
