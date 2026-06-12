@@ -65,16 +65,26 @@ class ShareViewController: UIViewController {
 
         guard let link = components.url else { return close() }
 
+        NSLog("[ShareExtension] opening %@", link.absoluteString)
+
         DispatchQueue.main.async { [weak self] in
-            self?.openURL(link)
-            self?.close()
+            guard let self = self else { return }
+            // Modern API — the host (Safari, etc) opens the URL on our behalf
+            // and the share sheet dismisses automatically. completeRequest
+            // happens after the host has handed off.
+            self.extensionContext?.open(link) { success in
+                NSLog("[ShareExtension] extensionContext.open success=%d", success)
+                if !success {
+                    // Fall back to the responder-chain hack
+                    self.openViaResponderChain(link)
+                }
+                self.close()
+            }
         }
     }
 
-    // Share Extensions can't call UIApplication.open directly, so we walk the
-    // responder chain to find a UIApplication and call its `openURL:` selector.
     @discardableResult
-    private func openURL(_ url: URL) -> Bool {
+    private func openViaResponderChain(_ url: URL) -> Bool {
         var responder: UIResponder? = self
         let selector = sel_registerName("openURL:")
         while let r = responder {
