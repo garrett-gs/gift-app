@@ -86,7 +86,12 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
         const data = await res.json();
         if (data.image) { setImageUrl(data.image); gotSomething = true; }
         if (data.title) { setName((prev: string) => (force || !prev) ? data.title : prev); gotSomething = true; }
-        if (data.description) { setDescription((prev: string) => (force || !prev) ? data.description : prev); gotSomething = true; }
+        if (data.description) {
+          setDescription((prev: string) => (force || !prev) ? data.description : prev);
+          gotSomething = true;
+          // Description lives inside "More details" — expand it so the user sees it filled in.
+          setShowDetails(true);
+        }
         if (data.price) { setPrice((prev: string) => (force || !prev) ? String(data.price) : prev); gotSomething = true; }
         if (data.category) {
           setCategory(data.category);

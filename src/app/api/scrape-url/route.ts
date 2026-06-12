@@ -42,10 +42,14 @@ export async function POST(request: Request) {
       ld.name ||
       extractTitle(html);
 
-    const ogDescription = extractMeta(html, 'property="og:description"') ||
-      extractMeta(html, "property='og:description'") ||
-      extractMeta(html, 'name="description"') ||
-      ld.description;
+    // Prefer the richest description we can find. Product JSON-LD often has the
+    // real blurb while OG is generic ("Shop X at Site.com").
+    const ogDescription = pickLongest([
+      extractMeta(html, 'property="og:description"'),
+      extractMeta(html, "property='og:description'"),
+      extractMeta(html, 'name="description"'),
+      ld.description,
+    ]);
 
     const ogPrice = extractMeta(html, 'property="product:price:amount"') ||
       extractMeta(html, 'property="og:price:amount"') ||
@@ -95,6 +99,17 @@ function extractMeta(html: string, attr: string): string | null {
   if (match2) return match2[1];
 
   return null;
+}
+
+function pickLongest(candidates: (string | null | undefined)[]): string | null {
+  let best: string | null = null;
+  for (const c of candidates) {
+    if (typeof c !== "string") continue;
+    const trimmed = c.trim();
+    if (!trimmed) continue;
+    if (!best || trimmed.length > best.length) best = trimmed;
+  }
+  return best;
 }
 
 function extractTitle(html: string): string | null {
