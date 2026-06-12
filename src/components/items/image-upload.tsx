@@ -12,6 +12,8 @@ interface ImageUploadProps {
     name?: string;
     price?: number;
     url?: string;
+    description?: string;
+    category?: string;
   }) => void;
 }
 
@@ -101,6 +103,8 @@ export function ImageUpload({
             name: data.name || undefined,
             price: data.price || undefined,
             url: data.url || undefined,
+            description: data.description || undefined,
+            category: data.category || undefined,
           });
         }
       } else {

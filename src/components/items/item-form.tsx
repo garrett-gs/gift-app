@@ -152,9 +152,11 @@ export function ItemForm({ item, action, submitLabel, onSuccess }: ItemFormProps
         onProductIdentified={(product) => {
           if (product.name) setName(product.name);
           if (product.price) setPrice(String(product.price));
+          if (product.description) setDescription(product.description);
+          if (product.category) setCategory(product.category);
           if (product.url) {
             setUrl(product.url);
-            // Auto-fetch more details from the product URL
+            // If we got a product page URL, scrape it for the real image/price
             fetchUrlMetadata(product.url, true);
           }
           setShowDetails(true);
