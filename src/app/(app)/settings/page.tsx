@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Cake, Calendar, Heart, Mail, Phone, Plus, Sparkles, ThumbsDown } from "lucide-react";
 import { ProfileEditor } from "@/components/auth/profile-editor";
 import { EditProfileToggle } from "@/components/auth/edit-profile-toggle";
+import { BiometricToggle } from "@/components/auth/biometric-toggle";
 import { RegistryCard } from "@/components/registry/registry-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/lib/button-variants";
@@ -191,6 +192,12 @@ export default async function SettingsPage() {
             </p>
           )}
         </div>
+      </div>
+
+      {/* Security */}
+      <div className="mt-8 space-y-3">
+        <h2 className="text-lg font-semibold">Security</h2>
+        <BiometricToggle />
       </div>
 
       {/* Collapsible Edit Profile */}

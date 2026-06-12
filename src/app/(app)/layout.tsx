@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopNav } from "@/components/layout/top-nav";
 import { DeepLinkHandler } from "@/components/layout/deep-link-handler";
+import { BiometricGate } from "@/components/auth/biometric-gate";
 
 export default async function AppLayout({
   children,
@@ -24,13 +25,15 @@ export default async function AppLayout({
     "User";
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden">
-      <DeepLinkHandler />
-      <AppSidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
-        <TopNav displayName={displayName} />
-        <main className="flex-1 overflow-x-hidden px-4 py-6 pb-24 md:px-8 md:pb-6">{children}</main>
+    <BiometricGate>
+      <div className="flex min-h-screen overflow-x-hidden">
+        <DeepLinkHandler />
+        <AppSidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <TopNav displayName={displayName} />
+          <main className="flex-1 overflow-x-hidden px-4 py-6 pb-24 md:px-8 md:pb-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </BiometricGate>
   );
 }
