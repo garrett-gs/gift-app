@@ -8,11 +8,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     private let appGroupID = "group.com.giftapp.gift.shared"
     private let pendingShareKey = "pendingShareUrl"
+    private var hasConsumedThisLaunch = false
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Give Capacitor a beat to spin up its bridge before we replay any
         // share-extension URL through the App plugin.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
             self?.consumePendingShare()
         }
         return true
@@ -23,8 +24,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillEnterForeground(_ application: UIApplication) {}
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Fires both on cold-launch tail and every foreground. Cheap to check;
-        // no-ops when there's nothing waiting in the shared container.
+        // Only consume on the very first activation so we don't fight the
+        // WebView every time iOS bounces us between active/inactive (control
+        // center, notification banners, etc.).
+        guard !hasConsumedThisLaunch else { return }
         consumePendingShare()
     }
 
@@ -39,6 +42,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     private func consumePendingShare() {
+        hasConsumedThisLaunch = true
         guard let defaults = UserDefaults(suiteName: appGroupID) else {
             NSLog("[GIFT] App Group %@ unavailable — share extension hand-off disabled", appGroupID)
             return
