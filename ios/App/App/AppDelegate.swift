@@ -20,13 +20,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     func applicationWillResignActive(_ application: UIApplication) {}
-    func applicationDidEnterBackground(_ application: UIApplication) {}
+
+    func applicationDidEnterBackground(_ application: UIApplication) {
+        // A genuine background trip means the user might come back with a
+        // newly-shared URL. Re-arm the consume gate so the next foreground
+        // can replay it. Transient bounces (notification banners, control
+        // center, etc.) don't fire didEnterBackground, so the gate stays shut
+        // for those and the WebView isn't churned.
+        hasConsumedThisLaunch = false
+    }
+
     func applicationWillEnterForeground(_ application: UIApplication) {}
 
     func applicationDidBecomeActive(_ application: UIApplication) {
-        // Only consume on the very first activation so we don't fight the
-        // WebView every time iOS bounces us between active/inactive (control
-        // center, notification banners, etc.).
         guard !hasConsumedThisLaunch else { return }
         consumePendingShare()
     }
