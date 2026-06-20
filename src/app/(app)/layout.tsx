@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { TopNav } from "@/components/layout/top-nav";
 import { DeepLinkHandler } from "@/components/layout/deep-link-handler";
 import { BiometricGate } from "@/components/auth/biometric-gate";
+import { ShareCredentialsSync } from "@/components/auth/share-credentials-sync";
 
 export default async function AppLayout({
   children,
@@ -28,6 +29,7 @@ export default async function AppLayout({
     <BiometricGate>
       <div className="flex min-h-screen overflow-x-hidden">
         <DeepLinkHandler />
+        <ShareCredentialsSync />
         <AppSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <TopNav displayName={displayName} />

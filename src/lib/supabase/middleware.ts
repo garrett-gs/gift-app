@@ -51,6 +51,7 @@ export async function updateSession(request: NextRequest) {
     const isPublicRoute = request.nextUrl.pathname === "/" ||
       request.nextUrl.pathname.startsWith("/invite/") ||
       request.nextUrl.pathname.startsWith("/r/") ||
+      request.nextUrl.pathname.startsWith("/api/") ||
       isAuthRoute;
 
     if (!user && !isPublicRoute) {
