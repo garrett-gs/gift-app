@@ -19,9 +19,18 @@ export function DeepLinkHandler() {
       const handle = await App.addListener("appUrlOpen", (event) => {
         try {
           const incoming = new URL(event.url);
-          // gift://add-item?url=...&title=...
-          if (incoming.host !== "add-item") return;
-          const target = new URL("/add-item", window.location.origin);
+          let path = "";
+          // Two shapes can arrive here:
+          //  1. gift://add-item?url=...    (custom-scheme fallback)
+          //  2. https://<our-domain>/add-item?url=...  (Universal Link)
+          if (incoming.protocol === "gift:" && incoming.host === "add-item") {
+            path = "/add-item";
+          } else if (incoming.pathname.startsWith("/add-item")) {
+            path = incoming.pathname;
+          } else {
+            return;
+          }
+          const target = new URL(path, window.location.origin);
           incoming.searchParams.forEach((value, key) => {
             target.searchParams.set(key, value);
           });

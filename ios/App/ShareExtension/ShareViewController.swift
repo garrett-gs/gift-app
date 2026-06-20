@@ -5,6 +5,7 @@ class ShareViewController: UIViewController {
 
     private let appGroupID = "group.com.giftapp.gift.shared"
     private let pendingKey = "pendingShareUrl"
+    private let universalLinkBase = "https://gift-app-lyart.vercel.app/add-item"
 
     private var didClose = false
     private var timeoutWorkItem: DispatchWorkItem?
@@ -89,27 +90,40 @@ class ShareViewController: UIViewController {
     }
 
     private func savePending(urlString: String, title: String = "") {
-        var components = URLComponents()
-        components.scheme = "gift"
-        components.host = "add-item"
+        // Build a https Universal Link. iOS routes it to the GIFT app when
+        // the apple-app-site-association file lives at the same domain;
+        // falls through to Safari if anything's misconfigured.
+        guard var components = URLComponents(string: universalLinkBase) else {
+            NSLog("[ShareExtension] bad universalLinkBase")
+            return
+        }
         var query: [URLQueryItem] = []
         if !urlString.isEmpty { query.append(URLQueryItem(name: "url", value: urlString)) }
         if !title.isEmpty { query.append(URLQueryItem(name: "title", value: title)) }
         components.queryItems = query.isEmpty ? nil : query
 
         guard let link = components.url else {
-            NSLog("[ShareExtension] could not assemble gift:// URL")
+            NSLog("[ShareExtension] could not assemble Universal Link")
             return
         }
 
-        guard let defaults = UserDefaults(suiteName: appGroupID) else {
+        // Always persist to the App Group as a belt-and-suspenders fallback —
+        // if the Universal Link hop doesn't take for any reason, the user
+        // opening GIFT manually still gets the URL replayed.
+        if let defaults = UserDefaults(suiteName: appGroupID) {
+            defaults.set(link.absoluteString, forKey: pendingKey)
+            defaults.synchronize()
+            NSLog("[ShareExtension] saved pending: %@", link.absoluteString)
+        } else {
             NSLog("[ShareExtension] WARNING App Group %@ unavailable", appGroupID)
-            return
         }
 
-        defaults.set(link.absoluteString, forKey: pendingKey)
-        defaults.synchronize()
-        NSLog("[ShareExtension] saved pending: %@", link.absoluteString)
+        // Hand off to iOS — share extensions are allowed to open https URLs,
+        // and Universal Links is the only path that lands inside the host
+        // app instead of Safari.
+        extensionContext?.open(link) { success in
+            NSLog("[ShareExtension] extensionContext.open success=%d url=%@", success, link.absoluteString)
+        }
     }
 
     private func close(reason: String) {

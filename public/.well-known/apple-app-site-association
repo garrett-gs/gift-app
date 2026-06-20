@@ -1,0 +1,13 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["48Z83HAZH7.com.garrettschmidt.giftapp"],
+        "components": [
+          { "/": "/add-item" },
+          { "/": "/add-item/*" }
+        ]
+      }
+    ]
+  }
+}
