@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.giftapp.gift',
+  appId: 'com.garrettschmidt.giftapp',
   appName: 'GIFT',
   webDir: 'out',
   server: {
