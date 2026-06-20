@@ -133,14 +133,14 @@ class ShareViewController: UIViewController {
         card.translatesAutoresizingMaskIntoConstraints = false
 
         let title = UILabel()
-        title.text = "Saved to GIFT"
+        title.text = "Link saved"
         title.font = .systemFont(ofSize: 17, weight: .semibold)
         title.textAlignment = .center
         title.textColor = .black
         title.translatesAutoresizingMaskIntoConstraints = false
 
         let subtitle = UILabel()
-        subtitle.text = "Open the app to finish adding it"
+        subtitle.text = "Open GIFT to pick a registry and finish adding it."
         subtitle.font = .systemFont(ofSize: 13)
         subtitle.textAlignment = .center
         subtitle.textColor = UIColor.darkGray
@@ -148,7 +148,7 @@ class ShareViewController: UIViewController {
         subtitle.translatesAutoresizingMaskIntoConstraints = false
 
         let openButton = UIButton(type: .system)
-        openButton.setTitle("Open in GIFT", for: .normal)
+        openButton.setTitle("Open GIFT to add", for: .normal)
         openButton.titleLabel?.font = .systemFont(ofSize: 17, weight: .semibold)
         openButton.backgroundColor = .black
         openButton.setTitleColor(.white, for: .normal)
