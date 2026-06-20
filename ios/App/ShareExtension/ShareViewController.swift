@@ -55,8 +55,8 @@ class ShareViewController: UIViewController {
                     self?.savePending(urlString: detected)
                 } else {
                     NSLog("[ShareExtension] URL attachment yielded unexpected type: %@", String(describing: type(of: data)))
+                    self?.close(reason: "url extract failed")
                 }
-                self?.close(reason: "url done")
             }
             return
         }
@@ -71,8 +71,9 @@ class ShareViewController: UIViewController {
                     self?.savePending(urlString: detected)
                 } else if let s = data as? String {
                     self?.savePending(urlString: "", title: s)
+                } else {
+                    self?.close(reason: "text extract failed")
                 }
-                self?.close(reason: "text done")
             }
             return
         }
@@ -118,11 +119,21 @@ class ShareViewController: UIViewController {
             NSLog("[ShareExtension] WARNING App Group %@ unavailable", appGroupID)
         }
 
-        // Hand off to iOS — share extensions are allowed to open https URLs,
-        // and Universal Links is the only path that lands inside the host
-        // app instead of Safari.
-        extensionContext?.open(link) { success in
+        handoff(link: link)
+    }
+
+    private func handoff(link: URL) {
+        // Wait until iOS finishes processing the open before tearing down the
+        // extension — otherwise the host app (Chrome) can be left stranded.
+        let timeout = DispatchWorkItem { [weak self] in
+            self?.close(reason: "handoff timeout")
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0, execute: timeout)
+
+        extensionContext?.open(link) { [weak self] success in
+            timeout.cancel()
             NSLog("[ShareExtension] extensionContext.open success=%d url=%@", success, link.absoluteString)
+            self?.close(reason: success ? "handoff success" : "handoff failed")
         }
     }
 
