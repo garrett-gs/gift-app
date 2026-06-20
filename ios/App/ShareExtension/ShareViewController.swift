@@ -3,9 +3,12 @@ import UniformTypeIdentifiers
 
 class ShareViewController: UIViewController {
 
+    private let appGroupID = "group.com.giftapp.gift.shared"
+    private let pendingKey = "pendingShareUrl"
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .clear
+        view.backgroundColor = UIColor.black.withAlphaComponent(0.35)
         handleShare()
     }
 
@@ -65,36 +68,72 @@ class ShareViewController: UIViewController {
 
         guard let link = components.url else { return close() }
 
-        NSLog("[ShareExtension] opening %@", link.absoluteString)
+        // Persist to the shared App Group container so the main app can pick
+        // it up when it next becomes active. iOS blocks share extensions from
+        // launching apps via custom URL schemes, so we rely on the user
+        // opening the app after dismissing the share sheet.
+        if let defaults = UserDefaults(suiteName: appGroupID) {
+            defaults.set(link.absoluteString, forKey: pendingKey)
+            defaults.synchronize()
+            NSLog("[ShareExtension] wrote pending share: %@", link.absoluteString)
+        } else {
+            NSLog("[ShareExtension] WARNING: App Group %@ not available — pending share NOT persisted", appGroupID)
+        }
 
         DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            // Modern API — the host (Safari, etc) opens the URL on our behalf
-            // and the share sheet dismisses automatically. completeRequest
-            // happens after the host has handed off.
-            self.extensionContext?.open(link) { success in
-                NSLog("[ShareExtension] extensionContext.open success=%d", success)
-                if !success {
-                    // Fall back to the responder-chain hack
-                    self.openViaResponderChain(link)
-                }
-                self.close()
-            }
+            self?.presentConfirmation(link: link)
         }
     }
 
-    @discardableResult
-    private func openViaResponderChain(_ url: URL) -> Bool {
-        var responder: UIResponder? = self
-        let selector = sel_registerName("openURL:")
-        while let r = responder {
-            if r.responds(to: selector) {
-                _ = r.perform(selector, with: url)
-                return true
-            }
-            responder = r.next
+    private func presentConfirmation(link: URL) {
+        let card = UIView()
+        card.backgroundColor = UIColor.white
+        card.layer.cornerRadius = 16
+        card.translatesAutoresizingMaskIntoConstraints = false
+
+        let label = UILabel()
+        label.text = "Saved to GIFT"
+        label.font = .systemFont(ofSize: 17, weight: .semibold)
+        label.textAlignment = .center
+        label.textColor = .black
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        let sub = UILabel()
+        sub.text = "Open GIFT to add it to a list"
+        sub.font = .systemFont(ofSize: 13, weight: .regular)
+        sub.textAlignment = .center
+        sub.textColor = UIColor.darkGray
+        sub.translatesAutoresizingMaskIntoConstraints = false
+
+        card.addSubview(label)
+        card.addSubview(sub)
+        view.addSubview(card)
+
+        NSLayoutConstraint.activate([
+            card.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+            card.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            card.widthAnchor.constraint(equalToConstant: 260),
+            card.heightAnchor.constraint(equalToConstant: 90),
+
+            label.topAnchor.constraint(equalTo: card.topAnchor, constant: 18),
+            label.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            label.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+
+            sub.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 4),
+            sub.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            sub.trailingAnchor.constraint(equalTo: card.trailingAnchor),
+        ])
+
+        // Best-effort attempt: some iOS versions/hosts still allow this. If
+        // it works we get a one-tap experience; if not, the App Group handoff
+        // covers the user when they open GIFT manually.
+        extensionContext?.open(link) { success in
+            NSLog("[ShareExtension] extensionContext.open success=%d", success)
         }
-        return false
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { [weak self] in
+            self?.close()
+        }
     }
 
     private func close() {
